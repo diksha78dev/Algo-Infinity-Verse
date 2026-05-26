@@ -2,6 +2,8 @@ name: restrict-issue-close
 on:
   issues:
     types: [closed]
+permissions:
+  issues: write
 jobs:
   check-closer:
     runs-on: ubuntu-latest
@@ -12,13 +14,6 @@ jobs:
           MAINTAINERS: ${{ vars.MAINTAINERS }}
         with:
           script: |
-            const { data: issue } = await github.rest.issues.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number
-            });
-            
-            const maintainers = (process.env.MAINTAINERS || 'maintainers').split(',').map(m => m.trim());
             const closer = context.actor;
             
             try {
@@ -27,9 +22,7 @@ jobs:
                 username: closer
               });
               
-              const isMaintainer = maintainers.includes(closer) || 
-                                    membership.role === 'admin' || 
-                                    membership.role === 'member';
+              const isMaintainer = membership.role === 'admin' || membership.role === 'member';
               
               if (!isMaintainer) {
                 throw new Error('Not a maintainer');

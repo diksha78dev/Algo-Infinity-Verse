@@ -2,6 +2,8 @@ name: duplicate-issue
 on:
   issues:
     types: [labeled]
+permissions:
+  issues: write
 jobs:
   handle-duplicate:
     if: github.event.label.name == 'duplicate'
@@ -11,17 +13,17 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            github.rest.issues.createComment({
+            await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '🔍 **Duplicate Issue Detected**\n\nThis issue appears to be a duplicate of an existing issue. Please check existing issues before creating new ones to avoid duplicates.\n\nIf you believe this is not a duplicate, please provide additional context explaining why.'
+              body: '🔍 **Duplicate Issue Detected**\n\nThis issue appears to be a duplicate of an existing issue. Please check existing issues before creating new ones.\n\nIf you believe this is not a duplicate, please provide additional context explaining why.'
             })
       - name: Add duplicate label
         uses: actions/github-script@v7
         with:
           script: |
-            github.rest.issues.addLabels({
+            await github.rest.issues.addLabels({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -31,7 +33,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            github.rest.issues.lock({
+            await github.rest.issues.lock({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,

@@ -3,6 +3,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+permissions:
+  issues: write
 jobs:
   create-labels:
     runs-on: ubuntu-latest
