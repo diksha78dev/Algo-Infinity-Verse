@@ -4,20 +4,18 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": null,
-  "functions": {
-    "server.js": {
-      "runtime": "nodejs18.x",
-      "maxDuration": 30
-    }
-  },
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/server.js"
+      "source": "/login",
+      "destination": "/login.html"
     },
     {
-      "source": "/(.*)",
-       "destination": "/server.js"
+      "source": "/signup",
+      "destination": "/signup.html"
+    },
+    {
+      "source": "/community",
+      "destination": "/community.html"
     }
   ],
   "headers": [
