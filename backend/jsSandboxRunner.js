@@ -100,6 +100,97 @@ module.exports = { runOne, __captured };
   return harness;
 }
 
+async function runWithPiston({ language, sourceCode, tests, timeoutMs, maxOutputChars, showMySteps }) {
+  const versionMap = { python: "3.10.0", cpp: "10.2.0" };
+  const langIdMap = { python: "python", cpp: "c++" };
+  const langId = langIdMap[language] || language;
+  
+  const results = [];
+  
+  for (let i = 0; i < tests.length; i++) {
+    const t = tests[i];
+    const start = Date.now();
+    
+    const stdinStr = typeof t.input === "string" ? t.input : JSON.stringify(t.input);
+    const expected = t.expectedOutput;
+    
+    let actualOutput = null;
+    let passed = false;
+    let runtimeError = null;
+    let stdout = "";
+    let stderr = "";
+    let timedOut = false;
+    
+    try {
+      const response = await fetch("https://emkc.org/api/v2/piston/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          language: langId,
+          version: versionMap[language] || "*",
+          files: [{ content: sourceCode }],
+          stdin: stdinStr || "",
+          compile_timeout: timeoutMs,
+          run_timeout: timeoutMs,
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.compile && data.compile.code !== 0) {
+        runtimeError = { message: "Compilation Error:\n" + data.compile.stderr };
+      } else if (data.run) {
+        stdout = data.run.stdout || "";
+        stderr = data.run.stderr || "";
+        
+        if (data.run.signal === "SIGKILL") {
+          timedOut = true;
+          runtimeError = { message: "Execution timed out" };
+        } else if (data.run.code !== 0) {
+          runtimeError = { message: stderr || `Process exited with code ${data.run.code}` };
+        } else {
+          actualOutput = stdout.trim();
+          if (typeof expected === "string") {
+            passed = actualOutput === String(expected).trim();
+          } else {
+            try {
+              const parsedActual = JSON.parse(actualOutput);
+              passed = JSON.stringify(parsedActual) === JSON.stringify(expected);
+            } catch {
+              passed = actualOutput === String(expected).trim();
+            }
+          }
+        }
+      } else {
+         runtimeError = { message: data.message || "Unknown error" };
+      }
+    } catch (e) {
+      runtimeError = { message: e.message };
+    }
+    
+    results.push({
+      testName: t.name ?? `test_${i + 1}`,
+      input: t.input,
+      expectedOutput: expected,
+      actualOutput: timedOut ? null : actualOutput,
+      passed,
+      durationMs: Date.now() - start,
+      timedOut,
+      runtimeError,
+      transcript: showMySteps ? {
+        stdout: truncate(stdout, maxOutputChars),
+        stderr: truncate(stderr, maxOutputChars),
+      } : undefined,
+    });
+  }
+  
+  return {
+    ok: true,
+    results,
+    runtimeMeta: { timeoutMs, maxOutputChars, showMySteps }
+  };
+}
+
 export async function runUserCode({
   language,
   sourceCode,
@@ -108,14 +199,25 @@ export async function runUserCode({
   maxOutputChars = 20000,
   showMySteps = false,
 }) {
+  const normalizedTests = Array.isArray(tests) ? tests.map(normalizeTestCase) : [];
+
+  if (language === "python" || language === "cpp") {
+    return await runWithPiston({
+      language,
+      sourceCode,
+      tests: normalizedTests,
+      timeoutMs,
+      maxOutputChars,
+      showMySteps,
+    });
+  }
+
   if (language && language !== "javascript") {
     return {
       ok: false,
       error: `Unsupported language for MVP sandbox: ${language}`,
     };
   }
-
-  const normalizedTests = Array.isArray(tests) ? tests.map(normalizeTestCase) : [];
 
   const stdoutAll = [];
   const stderrAll = [];
