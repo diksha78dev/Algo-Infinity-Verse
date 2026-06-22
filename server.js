@@ -1433,7 +1433,7 @@ socket.on('voice-ice', ({ roomId, candidate, to, from }) => {
 });
 // -----------------------------------------
 
-export { server };
+export { server, hashPassword, passwordMatches, applySM2, validateSignup };
 if (process.env.VERCEL === "1") {
   db = initializeFirebase();
   useFirestore = !!db;
@@ -1441,7 +1441,7 @@ if (process.env.VERCEL === "1") {
 
 
 
-if (process.env.VERCEL !== "1") {
+if (process.env.VERCEL !== "1" && process.env.NODE_ENV !== "test") {
   loadEnvFile()
     .then(() => {
       db = initializeFirebase();

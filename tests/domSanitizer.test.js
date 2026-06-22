@@ -1,51 +1,49 @@
-import test from 'node:test';
-import assert from 'node:assert';
 import { escapeHtml, sanitizeHTML } from '../modules/domSanitizer.js';
 
-test('DOMSanitizer - escapeHtml', async (t) => {
-  await t.test('escapes basic HTML characters', () => {
-    assert.strictEqual(escapeHtml('<script>alert("hello")</script>'), '&lt;script&gt;alert(&quot;hello&quot;)&lt;/script&gt;');
-    assert.strictEqual(escapeHtml('Hello & Welcome'), 'Hello &amp; Welcome');
-    assert.strictEqual(escapeHtml("John's Book"), 'John&#39;s Book');
+describe('DOMSanitizer - escapeHtml', () => {
+  it('escapes basic HTML characters', () => {
+    expect(escapeHtml('<script>alert("hello")</script>')).toBe('&lt;script&gt;alert(&quot;hello&quot;)&lt;/script&gt;');
+    expect(escapeHtml('Hello & Welcome')).toBe('Hello &amp; Welcome');
+    expect(escapeHtml("John's Book")).toBe('John&#39;s Book');
   });
 
-  await t.test('handles null and undefined', () => {
-    assert.strictEqual(escapeHtml(null), '');
-    assert.strictEqual(escapeHtml(undefined), '');
+  it('handles null and undefined', () => {
+    expect(escapeHtml(null)).toBe('');
+    expect(escapeHtml(undefined)).toBe('');
   });
 
-  await t.test('handles non-string inputs', () => {
-    assert.strictEqual(escapeHtml(123), '123');
-    assert.strictEqual(escapeHtml(true), 'true');
+  it('handles non-string inputs', () => {
+    expect(escapeHtml(123)).toBe('123');
+    expect(escapeHtml(true)).toBe('true');
   });
 });
 
-test('DOMSanitizer - sanitizeHTML', async (t) => {
-  await t.test('removes script tags', () => {
+describe('DOMSanitizer - sanitizeHTML', () => {
+  it('removes script tags', () => {
     const input = '<div>Hello <script>alert(1)</script>World</div>';
     const expected = '<div>Hello World</div>';
-    assert.strictEqual(sanitizeHTML(input), expected);
+    expect(sanitizeHTML(input)).toBe(expected);
   });
 
-  await t.test('strips onerror and other event handlers', () => {
+  it('strips onerror and other event handlers', () => {
     const input = '<img src="x" onerror="alert(1)" onload="javascript:alert(2)">';
     const expected = '<img src="x">';
-    assert.strictEqual(sanitizeHTML(input), expected);
+    expect(sanitizeHTML(input)).toBe(expected);
   });
 
-  await t.test('removes javascript: URIs', () => {
+  it('removes javascript: URIs', () => {
     const input = '<a href="javascript:alert(1)">Click here</a>';
     const expected = '<a>Click here</a>';
-    assert.strictEqual(sanitizeHTML(input), expected);
+    expect(sanitizeHTML(input)).toBe(expected);
   });
 
-  await t.test('preserves allowed tags and safe attributes', () => {
+  it('preserves allowed tags and safe attributes', () => {
     const input = '<div class="test" id="main"><b>Bold text</b></div>';
-    assert.strictEqual(sanitizeHTML(input), input);
+    expect(sanitizeHTML(input)).toBe(input);
   });
 
-  await t.test('handles null and undefined', () => {
-    assert.strictEqual(sanitizeHTML(null), '');
-    assert.strictEqual(sanitizeHTML(undefined), '');
+  it('handles null and undefined', () => {
+    expect(sanitizeHTML(null)).toBe('');
+    expect(sanitizeHTML(undefined)).toBe('');
   });
 });
