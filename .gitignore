@@ -33,3 +33,4 @@ yarn-error.log*
 data/
 
 node_modules/
+dist/
