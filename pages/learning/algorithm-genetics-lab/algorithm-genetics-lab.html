@@ -41,7 +41,7 @@
             
             <div class="search-box">
                 <i class="fas fa-search"></i>
-                <input type="text" id="algo-search" placeholder="Search algorithms..." autocomplete="off" />
+                <input type="text" id="algo-search" aria-label="Search algorithms" placeholder="Search algorithms..." autocomplete="off" />
             </div>
             
             <div class="filters">
@@ -152,9 +152,16 @@
     <script>
         // Load Navbar
         fetch('/partials/navbar.html')
-            .then(response => response.text())
+            .then(response => {
+                if (!response.ok) throw new Error(`Navbar load failed: ${response.status}`);
+                return response.text();
+            })
             .then(data => {
                 document.getElementById('navbar-placeholder').innerHTML = data;
+            })
+            .catch(() => {
+                const host = document.getElementById('navbar-placeholder');
+                if (host) host.innerHTML = '<nav aria-label="Primary"><a href="/index.html">Home</a></nav>';
             });
             
         // Hide loading screen
