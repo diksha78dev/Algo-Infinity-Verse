@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>`,
       challenge: {
         title: "Stateless Authorization Configurator",
-        instruction: "The client is getting a <code>401 Unauthorized</code> trying to fetch the protected endpoint <code>/billing-details</code>. The server logs state: <i>'Session cookies rejected. Use stateless auth headers.'</i> Configure the request to use Bearer authentication token <code>jwt_9832abc</code>.",
+        instruction: "The client is getting a <code>401 Unauthorized</code> trying to fetch the protected endpoint <code>/billing-details</code>. The server logs state: <i>'Session cookies rejected. Use stateless auth headers.'</i> Configure the request to use Bearer authentication token <code>mock_token_9832abc</code>.",
         html: `
           <div class="api-terminal">
             <div class="api-terminal-header">
@@ -121,7 +121,7 @@ Host: api.billing.com
             </div>
             <div style="grid-column: span 2;">
               <label class="api-label">Header Value</label>
-              <input type="text" id="headerVal2" class="api-input" placeholder="e.g. Bearer jwt_9832abc">
+              <input type="text" id="headerVal2" class="api-input" placeholder="e.g. Bearer mock_token_9832abc">
             </div>
           </div>
         `
@@ -790,7 +790,7 @@ ${hKey.value || '[HeaderKey]'}: ${hVal.value || '[HeaderValue]'}`;
       authType.addEventListener('change', () => {
         if (authType.value === 'bearer') {
           hKey.value = 'Authorization';
-          hVal.value = 'Bearer jwt_9832abc';
+          hVal.value = 'Bearer mock_token_9832abc';
         } else if (authType.value === 'cookie') {
           hKey.value = 'Cookie';
           hVal.value = 'session_id=9832';
@@ -806,7 +806,7 @@ ${hKey.value || '[HeaderKey]'}: ${hVal.value || '[HeaderValue]'}`;
         const val = hVal.value.trim();
         const typeOk = authType.value === 'bearer';
         const keyOk = key === 'authorization';
-        const valOk = val === 'Bearer jwt_9832abc';
+        const valOk = val === 'Bearer mock_token_9832abc';
 
         if (typeOk && keyOk && valOk) {
           showSuccess(feedback, completeBtn, "Pass! The request is now stateless and authenticated using the Authorization Bearer Token header.");
@@ -814,7 +814,7 @@ ${hKey.value || '[HeaderKey]'}: ${hVal.value || '[HeaderValue]'}`;
           let msg = "Validation failed: ";
           if (!typeOk) msg += "Auth Type must be 'Authorization Bearer Token'. Cookies are rejectable state vectors here. ";
           if (!keyOk) msg += "Header name must be exactly 'Authorization'. ";
-          if (!valOk) msg += "Header value must be exactly 'Bearer jwt_9832abc'. ";
+          if (!valOk) msg += "Header value must be exactly 'Bearer mock_token_9832abc'. ";
           showError(feedback, msg);
         }
       });
