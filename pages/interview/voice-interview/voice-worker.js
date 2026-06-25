@@ -28,6 +28,12 @@ InterviewPipeline.getInstance().then(() => {
 });
 
 self.addEventListener('message', async (event) => {
+    // Security: Validate message origin
+    if (event.origin && event.origin !== self.location.origin) {
+        console.warn('Unauthorized message origin:', event.origin);
+        return;
+    }
+
     const { history } = event.data;
 
     try {
