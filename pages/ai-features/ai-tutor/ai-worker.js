@@ -27,10 +27,8 @@ class PipelineSingleton {
 
 // Listen for messages from the main thread (ai-tutor.js)
 self.addEventListener('message', async (event) => {
-    if (event.origin !== self.location.origin) {
-        console.warn(`[Security] Ignored message from unauthorized origin: ${event.origin}`);
-        return;
-    }
+    self.addEventListener('message', async (event) => {
+        const { text, codeContext } = event.data;
 
     const { text, codeContext } = event.data;
 
