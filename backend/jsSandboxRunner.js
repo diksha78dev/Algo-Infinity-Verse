@@ -1,5 +1,3 @@
-import vm from "vm";
-
 function truncate(str, max) {
   const s = String(str ?? "");
   if (!Number.isFinite(max) || max <= 0) return "";
@@ -43,9 +41,51 @@ function normalizeTestCase(t) {
 }
 
 async function runWithPiston({ language, sourceCode, tests, timeoutMs, maxOutputChars, showMySteps }) {
-  const versionMap = { python: "3.10.0", cpp: "10.2.0" };
-  const langIdMap = { python: "python", cpp: "c++" };
+  const versionMap = { python: "3.10.0", cpp: "10.2.0", javascript: "18.15.0" };
+  const langIdMap = { python: "python", cpp: "c++", javascript: "javascript" };
   const langId = langIdMap[language] || language;
+  
+  let finalSourceCode = sourceCode;
+  if (language === "javascript") {
+    finalSourceCode = `
+${sourceCode}
+
+const fs = require('fs');
+const stdin = fs.readFileSync(0, 'utf-8');
+
+let __solve = null;
+if (typeof solve === 'function') __solve = solve;
+else if (typeof globalThis !== 'undefined' && typeof globalThis.solve === 'function') __solve = globalThis.solve;
+else if (typeof module !== 'undefined' && module.exports && typeof module.exports.solve === 'function') {
+  __solve = module.exports.solve;
+}
+
+if (!__solve) {
+  console.error('No solve function found. Expected a function named solve(input).');
+  process.exit(1);
+}
+
+try {
+  let input = stdin;
+  try {
+    input = JSON.parse(stdin);
+  } catch (e) {
+    // leave as string
+  }
+  const result = __solve(input);
+  if (result !== undefined) {
+    if (typeof result === 'object') {
+      console.log(JSON.stringify(result));
+    } else {
+      console.log(result);
+    }
+  }
+} catch (e) {
+  console.error(e);
+  process.exit(1);
+}
+`;
+  }
   
   const results = [];
   
@@ -70,7 +110,7 @@ async function runWithPiston({ language, sourceCode, tests, timeoutMs, maxOutput
         body: JSON.stringify({
           language: langId,
           version: versionMap[language] || "*",
-          files: [{ content: sourceCode }],
+          files: [{ content: finalSourceCode }],
           stdin: stdinStr || "",
           compile_timeout: timeoutMs,
           run_timeout: timeoutMs,
@@ -143,8 +183,8 @@ export async function runUserCode({
 }) {
   const normalizedTests = Array.isArray(tests) ? tests.map(normalizeTestCase) : [];
 
-  // Route Python/C++ to Piston
-  if (language === "python" || language === "cpp") {
+  // Route supported languages to Piston
+  if (language === "python" || language === "cpp" || language === "javascript") {
     return await runWithPiston({
       language,
       sourceCode,
@@ -155,151 +195,8 @@ export async function runUserCode({
     });
   }
 
-  if (language && language !== "javascript") {
-    return {
-      ok: false,
-      error: `Unsupported language for MVP sandbox: ${language}`,
-    };
-  }
-
-  // --- SECURE JAVASCRIPT EXECUTION (Sandboxed VM) ---
-  const results = [];
-
-  for (let i = 0; i < normalizedTests.length; i++) {
-    const t = normalizedTests[i];
-    const start = Date.now();
-    
-    let stdoutBuf = "";
-    let stderrBuf = "";
-
-    // 1. Create a secure mock console
-    const mockConsole = {
-      log: (...args) => {
-        const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(" ") + "\n";
-        if (stdoutBuf.length + msg.length <= maxOutputChars) stdoutBuf += msg;
-      },
-      error: (...args) => {
-        const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(" ") + "\n";
-        if (stderrBuf.length + msg.length <= maxOutputChars) stderrBuf += msg;
-      },
-      warn: (...args) => {
-        const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(" ") + "\n";
-        if (stdoutBuf.length + msg.length <= maxOutputChars) stdoutBuf += msg;
-      }
-    };
-
-    // 2. Initialize pristine, prototype-less sandbox
-    // EXPLICITLY MISSING: setTimeout, setInterval, process, require
-    const sandboxEnv = Object.create(null);
-    sandboxEnv.console = mockConsole;
-    sandboxEnv.Math = Math;
-    sandboxEnv.String = String;
-    sandboxEnv.Number = Number;
-    sandboxEnv.Array = Array;
-    sandboxEnv.Object = Object;
-    sandboxEnv.Boolean = Boolean;
-    sandboxEnv.Date = Date;
-    sandboxEnv.RegExp = RegExp;
-    sandboxEnv.Error = Error;
-    sandboxEnv.TypeError = TypeError;
-    sandboxEnv.RangeError = RangeError;
-    sandboxEnv.Map = Map;
-    sandboxEnv.Set = Set;
-    sandboxEnv.JSON = JSON;
-    sandboxEnv.isNaN = isNaN;
-    sandboxEnv.isFinite = isFinite;
-    sandboxEnv.parseInt = parseInt;
-    sandboxEnv.parseFloat = parseFloat;
-    
-    // Support for module.exports and globalThis formats
-    sandboxEnv.module = { exports: {} };
-    sandboxEnv.globalThis = sandboxEnv;
-    
-    // Inject test input
-    sandboxEnv.__TEST_INPUT__ = t.input;
-
-    const context = vm.createContext(sandboxEnv);
-
-    let actualOutput = null;
-    let runtimeError = null;
-    let timedOut = false;
-
-    try {
-      const executionWrapper = `
-        ${sourceCode}
-
-        let __solve = null;
-        if (typeof solve === 'function') __solve = solve;
-        else if (typeof globalThis !== 'undefined' && typeof globalThis.solve === 'function') __solve = globalThis.solve;
-        else if (typeof module !== 'undefined' && module.exports && typeof module.exports.solve === 'function') {
-          __solve = module.exports.solve;
-        }
-
-        if (!__solve) {
-          throw new Error('No solve function found. Expected a function named solve(input).');
-        }
-
-        // Return the evaluated result
-        __solve(__TEST_INPUT__);
-      `;
-
-      const script = new vm.Script(executionWrapper);
-      
-      // Execute securely with strict timeouts
-      actualOutput = script.runInContext(context, {
-        timeout: timeoutMs,
-        microtaskMode: 'afterEvaluate'
-      });
-
-    } catch (err) {
-      const msg = err?.message || String(err);
-      if (/timed out/i.test(msg)) {
-        timedOut = true;
-      }
-      runtimeError = {
-        message: msg,
-        stack: err?.stack || null,
-      };
-    }
-
-    const expected = t.expectedOutput;
-    let passed = false;
-
-    if (!timedOut && !runtimeError) {
-      if (typeof expected === "string") {
-        passed = String(actualOutput) === String(expected);
-      } else {
-        try {
-          passed = JSON.stringify(actualOutput) === JSON.stringify(expected);
-        } catch {
-          passed = actualOutput === expected;
-        }
-      }
-    }
-
-    results.push({
-      testName: t.name ?? `test_${i + 1}`,
-      input: t.input,
-      expectedOutput: expected,
-      actualOutput: timedOut ? null : actualOutput,
-      passed,
-      durationMs: Date.now() - start,
-      timedOut,
-      runtimeError,
-      transcript: showMySteps ? {
-        stdout: truncate(stdoutBuf, maxOutputChars),
-        stderr: truncate(stderrBuf, maxOutputChars),
-      } : undefined,
-    });
-  }
-
   return {
-    ok: true,
-    results,
-    runtimeMeta: {
-      timeoutMs,
-      maxOutputChars,
-      showMySteps,
-    },
+    ok: false,
+    error: `Unsupported language for MVP sandbox: ${language}`,
   };
 }
