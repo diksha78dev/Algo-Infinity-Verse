@@ -25,8 +25,9 @@ const b64 = (s) => Buffer.from(s, 'utf-8').toString('base64');
 const d64 = (s) => s ? Buffer.from(s, 'base64').toString('utf-8') : '';
 
 async function pollSubmission(token) {
+  const safeToken = encodeURIComponent(token);
   for (let i = 0; i < MAX_POLLS; i++) {
-    const resp = await fetch(`${JUDGE0}/submissions/${token}?base64_encoded=true`);
+    const resp = await fetch(`${JUDGE0}/submissions/${safeToken}?base64_encoded=true`);
     if (!resp.ok) throw new Error(`Judge0 poll error: ${await resp.text()}`);
     const data = await resp.json();
     if (data.status && data.status.id >= 3) return data;
@@ -66,6 +67,9 @@ app.post('/api/execute', async (req, res) => {
 
     const { token } = await submitResp.json();
     if (!token) return res.status(500).json({ error: 'Judge0 did not return a token' });
+    if (typeof token !== 'string' || !/^[a-zA-Z0-9-]+$/.test(token)) {
+      return res.status(500).json({ error: 'Invalid token format received' });
+    }
 
     const data = await pollSubmission(token);
 
