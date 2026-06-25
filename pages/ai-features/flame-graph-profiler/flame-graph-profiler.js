@@ -8,65 +8,6 @@ document.addEventListener("DOMContentLoaded", () => {
     initProfilerApp();
 });
 
-// ==========================================
-// 1. TRACING ENGINE (Instrumentation)
-// ==========================================
-
-const Tracer = {
-    stack: [],
-    root: null,
-    
-    reset() {
-        this.stack = [];
-        this.root = null;
-    },
-
-    enter(name) {
-        const node = { 
-            name: name, 
-            startTime: performance.now(), 
-            children: [], 
-            totalTime: 0, 
-            exclusiveTime: 0 
-        };
-
-        if (this.stack.length > 0) {
-            this.stack[this.stack.length - 1].children.push(node);
-        } else {
-            this.root = node;
-        }
-        this.stack.push(node);
-    },
-
-    exit() {
-        if (this.stack.length === 0) return;
-        
-        const node = this.stack.pop();
-        node.totalTime = performance.now() - node.startTime;
-        
-        // Calculate exclusive time (total time minus the time spent in children)
-        const childrenTime = node.children.reduce((sum, child) => sum + child.totalTime, 0);
-        
-        // Prevent negative exclusive time due to JS float precision limits
-        node.exclusiveTime = Math.max(0.001, node.totalTime - childrenTime);
-    },
-
-    getTraceData() {
-        return this.root;
-    }
-};
-
-// Expose globally so eval() can use it
-window.Tracer = Tracer;
-
-// Mock heavy workload to ensure the flame graph has visible width
-// Modern browsers execute simple fibonacci too fast to visualize properly
-window.simulateHeavyWork = function(ms) {
-    const start = performance.now();
-    while (performance.now() - start < ms) {
-        // block thread
-    }
-};
 
 // ==========================================
 // 2. EDITOR & APP STATE
@@ -123,30 +64,48 @@ fib(5);
 }
 
 function executeAndProfile() {
-    // Clear previous trace
-    Tracer.reset();
     els.emptyState.style.display = 'none';
+    els.btnProfileCode.disabled = true;
+    els.btnProfileCode.textContent = "Profiling...";
     
     const code = editor.getValue();
+    const worker = new Worker('profiler-worker.js');
+    const timeoutMs = 5000;
 
-    try {
-        // Execute the user's code in the browser context
-        // The code utilizes the global Tracer API
-        const execWrapper = new Function(code);
-        execWrapper();
+    const cleanup = () => {
+        clearTimeout(timeoutId);
+        worker.terminate();
+        els.btnProfileCode.disabled = false;
+        els.btnProfileCode.textContent = "Run Profile";
+    };
 
-        const traceData = Tracer.getTraceData();
-        
-        if (traceData) {
-            renderFlameGraph(traceData);
-            updateStats(traceData);
+    const timeoutId = setTimeout(() => {
+        cleanup();
+        alert(`Execution Error: Timeout / Infinite Loop Detected (exceeded ${timeoutMs}ms)`);
+    }, timeoutMs);
+
+    worker.onmessage = (e) => {
+        cleanup();
+        const { success, error, traceData } = e.data;
+        if (success) {
+            if (traceData) {
+                renderFlameGraph(traceData);
+                updateStats(traceData);
+            } else {
+                alert("No trace data generated. Did you use Tracer.enter() and Tracer.exit()?");
+            }
         } else {
-            alert("No trace data generated. Did you use Tracer.enter() and Tracer.exit()?");
+            alert(`Execution Error: ${error}`);
         }
-    } catch (err) {
-        alert(`Execution Error: ${err.message}`);
+    };
+
+    worker.onerror = (err) => {
+        cleanup();
+        alert(`Worker Error: ${err.message}`);
         console.error(err);
-    }
+    };
+
+    worker.postMessage({ code });
 }
 
 // ==========================================
