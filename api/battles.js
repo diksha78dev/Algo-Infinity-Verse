@@ -281,6 +281,33 @@ async function submitSolution(req, res, user, battleId) {
   }
 }
 
+// ─── Route helpers ────────────────────────────────────────────────────────────
+async function handleGetRoutes(req, res, user, url) {
+  if (/^\/api\/battles\/history/.test(url)) {
+    return await getHistory(req, res, user);
+  }
+  const getMatch = url.match(/^\/api\/battles\/([^/]+)\/?$/);
+  if (getMatch) {
+    return await getBattle(req, res, user, getMatch[1]);
+  }
+  return null;
+}
+
+async function handlePostRoutes(req, res, user, url) {
+  if (/^\/api\/battles\/?$/.test(url)) {
+    return await createBattle(req, res, user);
+  }
+  const joinMatch = url.match(/^\/api\/battles\/([^/]+)\/join\/?$/);
+  if (joinMatch) {
+    return await joinBattle(req, res, user, joinMatch[1]);
+  }
+  const submitMatch = url.match(/^\/api\/battles\/([^/]+)\/submit\/?$/);
+  if (submitMatch) {
+    return await submitSolution(req, res, user, submitMatch[1]);
+  }
+  return null;
+}
+
 // ─── Main handler ─────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   // Auth check — every battle route requires a valid session
@@ -301,33 +328,15 @@ export default async function handler(req, res) {
   const method = req.method;
 
   try {
-    // POST /api/battles
-    if (method === "POST" && /^\/api\/battles\/?$/.test(url)) {
-      return await createBattle(req, res, user);
+    let result = null;
+    
+    if (method === "GET") {
+      result = await handleGetRoutes(req, res, user, url);
+    } else if (method === "POST") {
+      result = await handlePostRoutes(req, res, user, url);
     }
 
-    // GET /api/battles/history
-    if (method === "GET" && /^\/api\/battles\/history/.test(url)) {
-      return await getHistory(req, res, user);
-    }
-
-    // GET /api/battles/:id
-    const getMatch = url.match(/^\/api\/battles\/([^/]+)\/?$/);
-    if (method === "GET" && getMatch) {
-      return await getBattle(req, res, user, getMatch[1]);
-    }
-
-    // POST /api/battles/:id/join
-    const joinMatch = url.match(/^\/api\/battles\/([^/]+)\/join\/?$/);
-    if (method === "POST" && joinMatch) {
-      return await joinBattle(req, res, user, joinMatch[1]);
-    }
-
-    // POST /api/battles/:id/submit
-    const submitMatch = url.match(/^\/api\/battles\/([^/]+)\/submit\/?$/);
-    if (method === "POST" && submitMatch) {
-      return await submitSolution(req, res, user, submitMatch[1]);
-    }
+    if (result) return result;
 
     return res.status(404).json({ error: "Route not found" });
 
