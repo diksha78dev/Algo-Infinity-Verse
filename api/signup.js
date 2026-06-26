@@ -249,6 +249,94 @@ async function rollbackUserCreation(docRef) {
   }
 }
 
+function validateSignupInput(body) {
+  const cleanName = String(body.name || "").trim();
+  const cleanEmail = String(body.email || "").trim().toLowerCase();
+  const rawPassword = String(body.password || "");
+  const rawConfirmPassword = String(body.confirmPassword || "");
+
+  if (cleanName.length < 2) {
+    return { error: "Name must be at least 2 characters." };
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    return { error: "Enter a valid email address." };
+  }
+  if (rawPassword.length < 8) {
+    return { error: "Password must be at least 8 characters." };
+  }
+  if (
+    !/[a-z]/.test(rawPassword) ||
+    !/[A-Z]/.test(rawPassword) ||
+    !/\d/.test(rawPassword)
+  ) {
+    return { error: "Password must include uppercase, lowercase, and a number." };
+  }
+  if (rawPassword !== rawConfirmPassword) {
+    return { error: "Passwords do not match." };
+  }
+
+  return { cleanName, cleanEmail, rawPassword };
+}
+
+async function handleDuplicateEmailCheck(email, clientId, res) {
+  const users = await readUsers();
+  if (users.some((user) => user.email === email)) {
+    // Normalize response time so a duplicate is indistinguishable from a
+    // real signup by timing — a real signup always runs PBKDF2 before
+    // responding, so we must delay here to match that latency profile.
+    await normalizeAuthDelay();
+    console.warn("[signup] duplicate email attempt", {
+      email,
+      ip: clientId,
+      at: new Date().toISOString(),
+    });
+    // Return a generic 200 that is indistinguishable from a real signup
+    // success so callers cannot enumerate registered email addresses.
+    // No session cookie is issued — the submitter has not authenticated.
+    return res.status(200).json({ ok: true });
+  }
+  return null;
+}
+
+async function processUserRegistration(user, clientId, res) {
+  let createdUserDoc = null;
+
+  try {
+    if (useFirestore) {
+      createdUserDoc = await createUserTransaction(user);
+    }
+
+    const token = createSessionToken(user);
+
+    return res
+      .status(201)
+      .setHeader("Set-Cookie", sessionCookie(token))
+      .json({
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
+      });
+  } catch (error) {
+    await rollbackUserCreation(createdUserDoc);
+
+    if (error.message === "DUPLICATE_USER") {
+      await normalizeAuthDelay();
+      console.warn("[signup] duplicate email attempt", {
+        email: user.email,
+        ip: clientId,
+        at: new Date().toISOString(),
+      });
+      console.info(`Duplicate signup attempt (transaction) for email: ${user.email}`);
+      // Same generic 200 as the non-Firestore path above.
+      return res.status(200).json({ ok: true });
+    }
+
+    throw error;
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({
@@ -280,73 +368,15 @@ export default async function handler(req, res) {
   // ──────────────────────────────────────────────────────────────────────────
 
   try {
-    const {
-      name,
-      email,
-      password,
-      confirmPassword,
-    } = req.body;
-
-    const cleanName = String(name || "").trim();
-    const cleanEmail = String(email || "")
-      .trim()
-      .toLowerCase();
-
-    const rawPassword = String(password || "");
-    const rawConfirmPassword = String(confirmPassword || "");
-
-    if (cleanName.length < 2) {
-      return res.status(400).json({
-        error: "Name must be at least 2 characters.",
-      });
+    const validation = validateSignupInput(req.body);
+    if (validation.error) {
+      return res.status(400).json({ error: validation.error });
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      return res.status(400).json({
-        error: "Enter a valid email address.",
-      });
-    }
+    const { cleanName, cleanEmail, rawPassword } = validation;
 
-    if (rawPassword.length < 8) {
-      return res.status(400).json({
-        error: "Password must be at least 8 characters.",
-      });
-    }
-
-    if (
-      !/[a-z]/.test(rawPassword) ||
-      !/[A-Z]/.test(rawPassword) ||
-      !/\d/.test(rawPassword)
-    ) {
-      return res.status(400).json({
-        error:
-          "Password must include uppercase, lowercase, and a number.",
-      });
-    }
-
-    if (rawPassword !== rawConfirmPassword) {
-      return res.status(400).json({
-        error: "Passwords do not match.",
-      });
-    }
-
-    const users = await readUsers();
-
-    if (users.some((user) => user.email === cleanEmail)) {
-      // Normalize response time so a duplicate is indistinguishable from a
-      // real signup by timing — a real signup always runs PBKDF2 before
-      // responding, so we must delay here to match that latency profile.
-      await normalizeAuthDelay();
-      console.warn("[signup] duplicate email attempt", {
-        email: cleanEmail,
-        ip: clientId,
-        at: new Date().toISOString(),
-      });
-      // Return a generic 200 that is indistinguishable from a real signup
-      // success so callers cannot enumerate registered email addresses.
-      // No session cookie is issued — the submitter has not authenticated.
-      return res.status(200).json({ ok: true });
-    }
+    const duplicateResponse = await handleDuplicateEmailCheck(cleanEmail, clientId, res);
+    if (duplicateResponse) return duplicateResponse;
 
     const user = {
       id: crypto.randomUUID(),
@@ -359,44 +389,7 @@ export default async function handler(req, res) {
       createdAt: new Date().toISOString(),
     };
 
-    let createdUserDoc = null;
-
-    try {
-      if (useFirestore) {
-        createdUserDoc = await createUserTransaction(user);
-      }
-
-      const token = createSessionToken(user);
-
-      return res
-        .status(201)
-        .setHeader("Set-Cookie", sessionCookie(token))
-        .json({
-          user: {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-          },
-        });
-    } catch (error) {
-      await rollbackUserCreation(createdUserDoc);
-
-      if (error.message === "DUPLICATE_USER") {
-        await normalizeAuthDelay();
-        console.warn("[signup] duplicate email attempt", {
-          email: cleanEmail,
-          ip: clientId,
-          at: new Date().toISOString(),
-        });
-       if (error.message === "DUPLICATE_USER") {
-         console.info(`Duplicate signup attempt (transaction) for email: ${cleanEmail}`);
-         // Same generic 200 as the non-Firestore path above.
-         return res.status(200).json({ ok: true });
-       }
-      }
-
-      throw error;
-    }
+    return await processUserRegistration(user, clientId, res);
   } catch (e) {
     console.error(e);
 
