@@ -517,8 +517,21 @@ function initGame() {
 
         terminalConsole.innerHTML = `<span class="terminal-line info">[RUNNER]: Initiating code comparisons...</span>\n`;
 
-        // 1. Compile & Execute correct version
-        let correctFn = new Function("return " + challenge.correctText)();
+        // 1. Compile & Execute correct version safely
+        let correctFn = new Function(
+            'fetch',
+            'XMLHttpRequest',
+            'WebSocket',
+            'indexedDB',
+            'document',
+            'window',
+            'localStorage',
+            'sessionStorage',
+            `
+            "use strict";
+            return ${challenge.correctText};
+            `
+        )(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined);
         let correctRes;
         let correctErr = null;
         try {
@@ -527,8 +540,21 @@ function initGame() {
             correctErr = err.message;
         }
 
-        // 2. Compile & Execute buggy version
-        let buggyFn = new Function("return " + challenge.buggyText)();
+        // 2. Compile & Execute buggy version safely
+        let buggyFn = new Function(
+            'fetch',
+            'XMLHttpRequest',
+            'WebSocket',
+            'indexedDB',
+            'document',
+            'window',
+            'localStorage',
+            'sessionStorage',
+            `
+            "use strict";
+            return ${challenge.buggyText};
+            `
+        )(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined);
         let buggyRes;
         let buggyErr = null;
         try {
