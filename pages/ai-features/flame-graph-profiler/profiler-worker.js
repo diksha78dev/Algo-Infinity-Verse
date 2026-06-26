@@ -64,9 +64,20 @@ self.onmessage = function(e) {
     Tracer.reset();
     
     try {
-        // Execute the user's code in the worker context
-        const execWrapper = new Function(code);
-        execWrapper();
+        // Execute the user's code in a restricted worker context
+        // Shadow sensitive globals to prevent unauthorized access
+        const execWrapper = new Function(
+            'fetch',
+            'XMLHttpRequest',
+            'WebSocket',
+            'indexedDB',
+            'importScripts',
+            `
+            "use strict";
+            ${code}
+            `
+        );
+        execWrapper(undefined, undefined, undefined, undefined, undefined);
         
         self.postMessage({ success: true, traceData: Tracer.getTraceData() });
     } catch (err) {
