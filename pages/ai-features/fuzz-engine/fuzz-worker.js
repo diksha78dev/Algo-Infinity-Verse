@@ -46,10 +46,22 @@ function runFuzzer(config) {
     let userFunc;
 
     try {
-        // Evaluate user code safely in worker context
+        // Evaluate user code safely in a restricted worker context
+        // Shadow sensitive globals to prevent unauthorized access
         // This expects the user's code to declare a function named `maxSubArray`
         // We append the function name so eval returns the function reference.
-        userFunc = new Function(config.code + "\nreturn maxSubArray;")();
+        userFunc = new Function(
+            'fetch',
+            'XMLHttpRequest',
+            'WebSocket',
+            'indexedDB',
+            'importScripts',
+            `
+            "use strict";
+            ${config.code}
+            return maxSubArray;
+            `
+        )(undefined, undefined, undefined, undefined, undefined);
         
         if (typeof userFunc !== 'function') {
             throw new Error("Could not find function 'maxSubArray'. Ensure your function name is correct.");
