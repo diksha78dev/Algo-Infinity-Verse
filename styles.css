@@ -3396,6 +3396,11 @@ section[id] {
 }
 
 /* ===== MODAL ===== */
+body.modal-open {
+  overflow: hidden !important;
+  padding-right: var(--scrollbar-width, 0px) !important;
+}
+
 .modal {
   position: fixed;
   top: 0;
@@ -3424,10 +3429,24 @@ section[id] {
   width: 100%;
   max-width: 700px;
   max-height: 90vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   overscroll-behavior: contain;
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
+  animation: modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .modal-header {
@@ -3485,6 +3504,9 @@ section[id] {
 
 .modal-body {
   padding: 2rem;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  overscroll-behavior: contain;
 }
 
 /* ===== NOTES MODAL ===== */
@@ -3640,8 +3662,9 @@ section[id] {
   width: 95%;
   max-height: 95vh;
   border-radius: 20px;
-  overflow-y: auto;
-  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 #quizEditorModal ::-webkit-scrollbar {
@@ -3707,9 +3730,9 @@ section[id] {
 
 .quiz-modal-body {
   padding: 20px;
-  max-height: 75vh;
   overflow-y: auto;
   overflow-x: hidden;
+  flex: 1 1 auto;
 }
 
 .quiz-layout {
