@@ -4,12 +4,34 @@ import { Queue } from 'bullmq';
 // A simple in-memory store to track batch progress
 export const batchStore = new Map();
 
-// ── Redis availability check ───────────────────────────────────────────────
-// Test once at startup with a short timeout. If Redis isn't running we export
-// no-op stubs so bullmq is never instantiated and the console stays clean.
+// Optional: You can configure REDIS_URL in your environment.
+// For local development without Redis, we will gracefully handle connection errors.
+const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
+  maxRetriesPerRequest: null,
+  retryStrategy: (times) => {
+    // Stop retrying after 3 attempts if Redis is not running locally to avoid log spam
+    if (times > 3) {
+      console.warn('Could not connect to Redis. Bulk audit features require Redis to be running.');
+      return null; 
+    }
+    return Math.min(times * 50, 2000);
+  }
+});
 
-let bulkAuditQueue = null;
-let redisAvailable = false;
+redisConnection.on('error', (err) => {
+  console.warn('Redis Connection Error (queue):', err.message);
+});
+
+// Create the shared queue instance
+export const bulkAuditQueue = new Queue('bulk-audit-queue', {
+  connection: redisConnection
+});
+
+bulkAuditQueue.on('error', (err) => {
+  console.warn('Queue Redis Connection Error:', err.message);
+});
+
+export let redisAvailable = false;
 
 async function checkRedis() {
   const probe = new IORedis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
@@ -31,22 +53,8 @@ async function checkRedis() {
   }
 }
 
-redisConnection.on('error', (err) => {
-  console.warn('Redis Connection Error (queue):', err.message);
-});
-
-// Create the shared queue instance
-export const bulkAuditQueue = new Queue('bulk-audit-queue', {
-  connection: redisConnection
-});
-
-bulkAuditQueue.on('error', (err) => {
-  console.warn('Queue Redis Connection Error:', err.message);
-});
-
-// A simple in-memory store to track batch progress
-// In a real production app, this would be stored in Redis or a DB.
-export const batchStore = new Map();
+// Perform checking asynchronously
+checkRedis().catch(() => {});
 
 /**
  * Enqueues a batch of repositories for analysis.
@@ -65,8 +73,12 @@ export async function enqueueBulkAudit(batchId, repoUrls) {
       name: `audit-${batchId}-${index}`,
       data: { batchId, repoUrl: url }
     }));
-    await bulkAuditQueue.addBulk(jobs);
-    return;
+    try {
+      await bulkAuditQueue.addBulk(jobs);
+      return;
+    } catch (err) {
+      console.warn("Bulk add to Redis failed. Falling back to in-process.");
+    }
   }
 
   // ── In-process fallback (no Redis) ───────────────────────────────────────
