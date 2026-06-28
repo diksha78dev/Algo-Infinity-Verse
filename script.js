@@ -1052,6 +1052,7 @@ let lastQuizResultData = null;
 let quizStartTime = null;
 let quizTimerInterval = null;
 let currentNotesProblemId = null;
+let tQuiz = null;
 
 function startQuiz(topic) {
   const topicKey = getQuizTopicKey(topic);
@@ -1344,8 +1345,15 @@ let lastFilteredCacheKey = "";
 let lastFilteredProblems = [];
 
 function getFilteredProblems() {
+  if (!window.dsaSearchEngine && typeof DSASearchEngine !== 'undefined') {
+    window.dsaSearchEngine = new DSASearchEngine(practiceProblems);
+  }
+
   let filtered = practiceProblems;
-  if (currentSearch) {
+  if (currentSearch && window.dsaSearchEngine) {
+    filtered = window.dsaSearchEngine.search(currentSearch);
+  } else if (currentSearch) {
+    // Fallback if searchEngine is somehow not loaded
     const searchLower = currentSearch.toLowerCase();
     filtered = filtered.filter(p => p.title.toLowerCase().includes(searchLower) || p.tags.some(tag => tag.toLowerCase().includes(searchLower)));
   }
@@ -1398,7 +1406,10 @@ function renderProblemCards(problems) {
     const isFavorite = userProgress.favoriteProblems.includes(problem.id);
     const hasNotes = userProgress.problemNotes && userProgress.problemNotes[problem.id];
 
-    return `<div class="problem-card animate-in" data-id="${problem.id}"><div class="problem-header"><h3 class="problem-title">${recBadge}${problem.title}</h3><div class="problem-actions"><button class="favorite-btn ${isFavorite ? 'active' : ''}" data-id="${problem.id}" aria-label="Favorite problem"><i class="fas fa-heart"></i></button><button class="notes-btn ${hasNotes ? 'has-notes' : ''}" data-id="${problem.id}" aria-label="Problem notes"><i class="fas fa-sticky-note"></i></button><span class="difficulty-badge ${problem.difficulty}">${problem.difficulty}</span></div></div><div class="problem-tags">${problem.tags.map(tag => `<span class="tag">${tag}</span>`).join("")}</div><div class="problem-meta"><span class="acceptance-rate"><i class="fas fa-users"></i> ${problem.acceptance} acceptance</span>${isCompleted ? '<span class="completed-badge"><i class="fas fa-check"></i> Completed</span>' : ''}</div></div>`;
+    const displayTitle = problem.highlightedTitle || problem.title;
+    const snippetHtml = problem.highlightedDescription ? `<div class="problem-snippet" style="font-size: 0.85em; color: var(--text-secondary); margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${problem.highlightedDescription}</div>` : "";
+
+    return `<div class="problem-card animate-in" data-id="${problem.id}"><div class="problem-header"><h3 class="problem-title">${recBadge}${displayTitle}</h3><div class="problem-actions"><button class="favorite-btn ${isFavorite ? 'active' : ''}" data-id="${problem.id}" aria-label="Favorite problem"><i class="fas fa-heart"></i></button><button class="notes-btn ${hasNotes ? 'has-notes' : ''}" data-id="${problem.id}" aria-label="Problem notes"><i class="fas fa-sticky-note"></i></button><span class="difficulty-badge ${problem.difficulty}">${problem.difficulty}</span></div></div>${snippetHtml}<div class="problem-tags">${problem.tags.map(tag => `<span class="tag">${tag}</span>`).join("")}</div><div class="problem-meta"><span class="acceptance-rate"><i class="fas fa-users"></i> ${problem.acceptance} acceptance</span>${isCompleted ? '<span class="completed-badge"><i class="fas fa-check"></i> Completed</span>' : ''}</div></div>`;
   }).join("");
 
   problemsGrid.innerHTML = html;
@@ -3637,7 +3648,7 @@ window.addEventListener('hashchange', () => {
       }
       }
     });
-    if (typeof tQuiz !== 'undefined') tQuiz = null;
+    if (typeof tQuiz !== 'undefined' && tQuiz !== null) tQuiz = null;
   }
 });
 
@@ -3740,6 +3751,59 @@ function closeShortcutModal() {
     const modal = document.getElementById('shortcutModal');
     if (modal) modal.style.display = 'none';
 }
+
+// ===== DID YOU KNOW? FACTS =====
+const facts = [
+    "The first computer virus, called 'Creeper', was created in 1971",
+    "The term 'bug' was coined when a moth got stuck in a computer in 1947",
+    "The first algorithm was written over 4,000 years ago by Babylonians",
+    "There are over 700 programming languages in use today",
+    "The first computer programmer was Ada Lovelace in the 1840s",
+    "Google processes over 3.5 billion searches per day",
+    "The first website is still online (info.cern.ch)",
+    "Python is named after Monty Python, not the snake",
+    "The first hard drive weighed over a ton and stored 5MB",
+    "JavaScript was created in just 10 days",
+    "The first computer mouse was made of wood",
+    "The first email was sent in 1971 by Ray Tomlinson",
+    "CAPTCHA stands for Completely Automated Public Turing test",
+    "The first webcam was used to monitor a coffee pot",
+    "There are more than 1.5 billion websites on the internet"
+];
+
+function getDailyFact() {
+    const today = new Date().toDateString();
+    let hash = 0;
+    for (let i = 0; i < today.length; i++) {
+        hash = ((hash << 5) - hash) + today.charCodeAt(i);
+        hash = hash & hash;
+    }
+    const index = Math.abs(hash) % facts.length;
+    return facts[index];
+}
+
+function showNextFact() {
+    const factText = document.getElementById('factText');
+    const factDate = document.getElementById('factDate');
+    
+    const randomIndex = Math.floor(Math.random() * facts.length);
+    factText.textContent = facts[randomIndex];
+    factDate.textContent = `💡 Fun fact #${randomIndex + 1}`;
+}
+
+function showDailyFact() {
+    const factText = document.getElementById('factText');
+    const factDate = document.getElementById('factDate');
+    
+    factText.textContent = getDailyFact();
+    const today = new Date().toLocaleDateString();
+    factDate.textContent = `📅 Fact of the day • ${today}`;
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    showDailyFact();
+});
 
 // ==== CODE LANGUAGE BADGES ====
 function detectLanguage(code) {
@@ -3859,6 +3923,7 @@ function trackBadgeEarned(badgeName) {
 }
 
     //Run on page load
+    document.addEventListener('DOMContentLoaded' , addLanguageBadges);
     document.addEventListener('DOMContentLoaded' , addLanguageBadges);
 // ============================================
 // REUSABLE ACCESSIBLE MODAL ARCHITECTURE

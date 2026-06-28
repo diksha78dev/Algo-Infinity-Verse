@@ -48,7 +48,7 @@
     <!-- Workspace Toolbar -->
     <div class="p2p-toolbar">
         <div class="toolbar-left">
-            <button class="btn btn-primary" id="btnOpenHandshake"><i class="fas fa-satellite-dish"></i> Connect to Peer</button>
+            <button class="btn btn-primary" id="btnShareInvite"><i class="fas fa-link"></i> Share Invite Link</button>
             <div class="status-indicator">
                 <span class="dot" id="statusDot"></span>
                 <span id="statusText">Disconnected</span>
@@ -102,59 +102,12 @@
 
     </main>
 
-    <!-- WebRTC Manual Handshake Modal -->
-    <div class="modal-overlay hidden" id="handshakeModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-handshake"></i> WebRTC P2P Handshake</h2>
-                <button class="btn-icon" id="btnCloseModal"><i class="fas fa-times"></i></button>
-            </div>
-            
-            <p class="modal-desc">Because this is a true serverless connection, you must exchange connection tokens manually to establish the peer-to-peer data channel.</p>
-
-            <div class="tabs">
-                <button class="tab-btn active" data-tab="host">1. Host a Room</button>
-                <button class="tab-btn" data-tab="join">2. Join a Room</button>
-            </div>
-
-            <!-- Host Flow -->
-            <div class="tab-content active" id="tab-host">
-                <div class="step-card">
-                    <h4>Step 1: Generate Invite Token</h4>
-                    <button class="btn btn-primary w-100" id="btnGenerateOffer">Generate Token</button>
-                    <textarea class="token-box" id="hostOfferToken" readonly placeholder="Your token will appear here..."></textarea>
-                    <button class="btn btn-secondary w-100 hidden" id="btnCopyOffer"><i class="fas fa-copy"></i> Copy & Send to Friend</button>
-                </div>
-                
-                <div class="step-card">
-                    <h4>Step 2: Paste Friend's Reply Token</h4>
-                    <textarea class="token-box" id="hostAnswerToken" placeholder="Paste the token your friend sends back..."></textarea>
-                    <button class="btn btn-success w-100" id="btnConnectHost">Connect</button>
-                </div>
-            </div>
-
-            <!-- Join Flow -->
-            <div class="tab-content hidden" id="tab-join">
-                <div class="step-card">
-                    <h4>Step 1: Paste Invite Token</h4>
-                    <textarea class="token-box" id="guestOfferToken" placeholder="Paste the token from the Host here..."></textarea>
-                    <button class="btn btn-primary w-100" id="btnAcceptOffer">Accept & Generate Reply</button>
-                </div>
-                
-                <div class="step-card hidden" id="guestReplySection">
-                    <h4>Step 2: Send Reply Token</h4>
-                    <textarea class="token-box" id="guestAnswerToken" readonly></textarea>
-                    <button class="btn btn-secondary w-100" id="btnCopyAnswer"><i class="fas fa-copy"></i> Copy & Send to Host</button>
-                    <p class="wait-text"><i class="fas fa-spinner fa-spin"></i> Waiting for Host to finalize connection...</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- WebRTC Modal removed as y-webrtc handles this automatically -->
     
     <!-- CodeMirror Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
     <!-- Main Logic -->
-    <script src="p2p-workspace.js"></script>
+    <script type="module" src="p2p-workspace.js"></script>
 </body>
 </html>

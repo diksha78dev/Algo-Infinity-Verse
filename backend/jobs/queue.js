@@ -1,51 +1,35 @@
 import IORedis from 'ioredis';
 import { Queue } from 'bullmq';
 
-// A simple in-memory store to track batch progress
+// ── Redis availability check ───────────────────────────────────────────────
+// Test once at startup with a short timeout. If Redis isn't running we fall
+// back to an in-process queue (bullmq is never instantiated).
+
 export const batchStore = new Map();
 
-// Optional: You can configure REDIS_URL in your environment.
-// For local development without Redis, we will gracefully handle connection errors.
-const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
-  maxRetriesPerRequest: null,
-  retryStrategy: (times) => {
-    // Stop retrying after 3 attempts if Redis is not running locally to avoid log spam
-    if (times > 3) {
-      console.warn('Could not connect to Redis. Bulk audit features require Redis to be running.');
-      return null; 
-    }
-    return Math.min(times * 50, 2000);
-  }
-});
-
-redisConnection.on('error', (err) => {
-  console.warn('Redis Connection Error (queue):', err.message);
-});
-
-// Create the shared queue instance
-export const bulkAuditQueue = new Queue('bulk-audit-queue', {
-  connection: redisConnection
-});
-
-bulkAuditQueue.on('error', (err) => {
-  console.warn('Queue Redis Connection Error:', err.message);
-});
-
-export let redisAvailable = false;
+let bulkAuditQueue = null;
+let redisAvailable = false;
 
 async function checkRedis() {
   const probe = new IORedis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
     maxRetriesPerRequest: 1,
     connectTimeout: 1000,
-    retryStrategy: () => null,        // do NOT retry the probe connection
+    retryStrategy: () => null,
     enableOfflineQueue: false,
   });
-  // Suppress the expected ECONNREFUSED on the probe instance
   probe.on('error', () => {});
 
   try {
     await probe.ping();
     redisAvailable = true;
+    const connection = new IORedis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
+      maxRetriesPerRequest: null,
+      enableOfflineQueue: false,
+    });
+    bulkAuditQueue = new Queue('bulk-audit-queue', { connection });
+    bulkAuditQueue.on('error', (err) => {
+      console.warn('Queue Redis Connection Error:', err.message);
+    });
   } catch {
     redisAvailable = false;
   } finally {
@@ -118,3 +102,5 @@ export function getBatchProgress(batchId) {
 
   return { ...batch, progress };
 }
+
+export { bulkAuditQueue, redisAvailable };
