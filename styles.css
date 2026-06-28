@@ -177,6 +177,139 @@ body {
   transform: translateY(-5px);
 }
 
+/* Did You Know? Facts Section */
+.facts-card {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(59, 130, 246, 0.08));
+    border: 1px solid rgba(124, 58, 237, 0.15);
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+    margin: 1.5rem 0;
+    transition: all 0.3s ease;
+}
+
+.facts-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(124, 58, 237, 0.1);
+}
+
+.facts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.facts-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.facts-icon {
+    font-size: 1.5rem;
+}
+
+.facts-title h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.facts-btn {
+    padding: 0.4rem 1.2rem;
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.facts-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+}
+
+.facts-content {
+    padding: 0.5rem 0;
+}
+
+.fact-text {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+    margin: 0 0 0.75rem 0;
+    min-height: 3.2rem;
+}
+
+.facts-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    opacity: 0.7;
+    border-top: 1px solid rgba(124, 58, 237, 0.1);
+    padding-top: 0.75rem;
+}
+
+.facts-counter {
+    background: rgba(124, 58, 237, 0.1);
+    padding: 0.2rem 0.8rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.7rem;
+    color: #7c3aed;
+}
+
+/* Dark Mode Support */
+.dark .facts-card {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(59, 130, 246, 0.1));
+    border-color: rgba(124, 58, 237, 0.25);
+}
+
+.dark .facts-btn {
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
+}
+
+.dark .facts-counter {
+    background: rgba(124, 58, 237, 0.2);
+    color: #8b5cf6;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .facts-card {
+        padding: 1rem 1.25rem;
+    }
+    
+    .facts-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .facts-btn {
+        align-self: flex-start;
+        font-size: 0.7rem;
+        padding: 0.3rem 1rem;
+    }
+    
+    .fact-text {
+        font-size: 0.95rem;
+    }
+    
+    .facts-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.3rem;
+    }
+}
+
 /* ===== AUTHENTICATION ===== */
 .auth-page {
   height: 100vh;
@@ -6207,6 +6340,8 @@ html.light-mode .nav-auth-link:hover {
   }
 }
 
+
+
 /* Lock icon ring */
 .auth-gate-icon {
   display: flex;
@@ -8389,6 +8524,7 @@ html.light-mode .report-issue-btn:hover {
 .language-badge.swift { background: #fa7343; color: #fff; }
 .language-badge.kotlin { background: #7f52ff; color: #fff; }
 .language-badge.kotlin { background: #7f52ff; color: #fff; }
+.language-badge.kotlin { background: #7f52ff; color: #fff; }
 /* ===== BREADCRUMBS ===== */
 .breadcrumbs {
   padding: 1rem 2rem;
@@ -8587,6 +8723,16 @@ html.light-mode .report-issue-btn:hover {
   padding: 0;
   margin-left: 10px;
   font-weight: bold;
+}
+
+/* Search Highlights */
+mark.search-highlight {
+  background-color: #ffd700;
+  color: #111;
+  border-radius: 3px;
+  padding: 0 2px;
+  font-weight: 600;
+  box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
 }
 
 

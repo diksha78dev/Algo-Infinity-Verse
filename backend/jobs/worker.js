@@ -6,22 +6,27 @@ import { batchStore, redisAvailable } from './queue.js';
 
 let auditWorker = null;
 
-// Only start the bullmq Worker if Redis is actually available.
-// This prevents ECONNREFUSED spam when running without Redis locally.
-if (redisAvailable) {
-  const conn = new IORedis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
-    maxRetriesPerRequest: null,
-  });
+const conn = redisAvailable
+  ? new IORedis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
+      maxRetriesPerRequest: null,
+    })
+  : null;
 
-  conn.on('error', (err) => {
-    console.warn('Redis Connection Error (worker):', err.message);
-  });
-
-  // Configure the worker process
+if (conn) {
   auditWorker = new Worker('bulk-audit-queue', async (job) => {
     const { batchId, repoUrl } = job.data;
-    
-    if (!repoUrl || !repoUrl.includes("github.com")) {
+
+    let parsedRepoUrl;
+    try {
+      parsedRepoUrl = new URL(repoUrl);
+    } catch {
+      throw new Error("Invalid GitHub URL");
+    }
+
+    if (
+      !['http:', 'https:'].includes(parsedRepoUrl.protocol) ||
+      !['github.com', 'www.github.com'].includes(parsedRepoUrl.hostname.toLowerCase())
+    ) {
       throw new Error("Invalid GitHub URL");
     }
 
@@ -36,14 +41,13 @@ if (redisAvailable) {
       }
 
       return { repoUrl, score: bestScore };
-
     } catch (error) {
       console.error(`Job ${job.id} failed for repo ${repoUrl}:`, error.message);
       throw error;
     }
   }, {
     connection: conn,
-    concurrency: 5 // Process up to 5 jobs simultaneously
+    concurrency: 5,
   });
 
   auditWorker.on('error', (err) => {
