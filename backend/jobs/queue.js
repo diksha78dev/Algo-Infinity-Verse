@@ -8,10 +8,7 @@ import { Queue } from 'bullmq';
 export const batchStore = new Map();
 
 let bulkAuditQueue = null;
-export let redisAvailable = false;
-
-// Initialize Redis and the queue at module load time
-checkRedis().catch(() => {});
+let redisAvailable = false;
 
 async function checkRedis() {
   const probe = new IORedis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
@@ -40,6 +37,8 @@ async function checkRedis() {
   }
 }
 
+// Perform checking asynchronously
+checkRedis().catch(() => {});
 
 /**
  * Enqueues a batch of repositories for analysis.
@@ -58,8 +57,12 @@ export async function enqueueBulkAudit(batchId, repoUrls) {
       name: `audit-${batchId}-${index}`,
       data: { batchId, repoUrl: url }
     }));
-    await bulkAuditQueue.addBulk(jobs);
-    return;
+    try {
+      await bulkAuditQueue.addBulk(jobs);
+      return;
+    } catch (err) {
+      console.warn("Bulk add to Redis failed. Falling back to in-process.");
+    }
   }
 
   // ── In-process fallback (no Redis) ───────────────────────────────────────
@@ -99,3 +102,5 @@ export function getBatchProgress(batchId) {
 
   return { ...batch, progress };
 }
+
+export { bulkAuditQueue, redisAvailable };
