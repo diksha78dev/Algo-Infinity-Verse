@@ -31,22 +31,21 @@ async function checkRedis() {
   }
 }
 
-redisConnection.on('error', (err) => {
-  console.warn('Redis Connection Error (queue):', err.message);
-});
+await checkRedis();
 
-// Create the shared queue instance
-export const bulkAuditQueue = new Queue('bulk-audit-queue', {
-  connection: redisConnection
-});
+if (redisAvailable) {
+  const conn = new IORedis(process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
+    maxRetriesPerRequest: null,
+  });
+  bulkAuditQueue = new Queue('bulk-audit-queue', { connection: conn });
+  console.log('Redis connected — Bulk audit queue ready.');
+} else {
+  console.log('Redis unavailable — Bulk audit will run in-process (no Redis required).');
+}
 
-bulkAuditQueue.on('error', (err) => {
-  console.warn('Queue Redis Connection Error:', err.message);
-});
+export { bulkAuditQueue, redisAvailable };
 
-// A simple in-memory store to track batch progress
-// In a real production app, this would be stored in Redis or a DB.
-export const batchStore = new Map();
+// ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * Enqueues a batch of repositories for analysis.

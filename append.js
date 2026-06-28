@@ -5,8 +5,8 @@ let currentSearch = '';
 // ============================================
 // HASH CHANGE ROUTER
 // ============================================
-window.addEventListener('hashchange', () => {
-  const currentHash = window.location.hash || '#home';
+globalThis.addEventListener('hashchange', () => {
+  const currentHash = globalThis.location.hash || '#home';
   if (currentHash === '#home' || currentHash === '') {
     document.querySelectorAll('*').forEach(element => {
       if (element.id?.toLowerCase().includes('quiz') || element.className?.toString().toLowerCase().includes('quiz') || element.id?.toLowerCase().includes('assistant')) element.style.display = 'none';
@@ -15,7 +15,7 @@ window.addEventListener('hashchange', () => {
     if (typeof tQuiz !== 'undefined' && tQuiz !== null) tQuiz = null;
   }
   
-  const path = window.location.pathname;
+  const path = globalThis.location.pathname;
   if (path.includes('/pages/learning/') || path.includes('/pages/visualizers/') || path.includes('/pages/resources/')) {
     const script = document.createElement('script');
     script.src = '/scripts/report-issue.js';
@@ -23,8 +23,8 @@ window.addEventListener('hashchange', () => {
   }
 });
 
-if (window.navManager) {
-  window.navManager.subscribe((state) => {
+if (globalThis.navManager) {
+  globalThis.navManager.subscribe((state) => {
     if (state.tab === 'practice') {
       currentFilter = state.filter || 'all';
       currentSearch = state.search || '';
