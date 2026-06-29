@@ -592,13 +592,7 @@ async function handleApi(req, res, pathname) {
         return sendJson(res, 400, { success: false, message: 'Source code and language are required.' });
       }
 
-      const languageMap = {
-        'javascript': { lang: 'nodejs', version: '4' },
-        'python': { lang: 'python3', version: '3' },
-        'cpp': { lang: 'cpp17', version: '0' },
-        'java': { lang: 'java', version: '4' },
-        'perl': { lang: 'perl', version: '0' }
-      };
+
 
       const languageId = JUDGE0_LANGUAGE_IDS[language.toLowerCase()];
 
