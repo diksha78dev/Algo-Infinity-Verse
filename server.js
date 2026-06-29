@@ -3293,17 +3293,21 @@ socket.on('voice-ice', ({ roomId, candidate, to, from }) => {
 
   // ── COLLABORATIVE STUDY ROOM EVENTS ──
   socket.on("join-study-room", async ({ roomId, userId, userName }) => {
+    const session = getSession(socket.request);
+    const authUserId = session ? session.sub : userId;
+    const authUserName = session ? session.name : userName;
+
     socket.join(roomId);
-    socket.userId = userId;
+    socket.userId = authUserId;
     socket.studyRoomId = roomId;
-    socket.userName = userName;
+    socket.userName = authUserName;
 
     let room = studyRooms.get(roomId);
     if (!room) {
       room = {
         id: roomId,
-        hostId: userId,
-        hostName: userName,
+        hostId: authUserId,
+        hostName: authUserName,
         config: { maxParticipants: 4, timerDuration: 600, difficulty: "Medium", topic: "arrays", problems: [] },
         status: "lobby",
         participants: {},
@@ -3314,10 +3318,10 @@ socket.on('voice-ice', ({ roomId, candidate, to, from }) => {
       studyRooms.set(roomId, room);
     }
 
-    if (!room.participants[userId]) {
-      room.participants[userId] = {
-        id: userId,
-        name: userName,
+    if (!room.participants[authUserId]) {
+      room.participants[authUserId] = { 
+        id: authUserId,
+        name: authUserName,
         status: room.status === "playing" ? "solving" : "lobby",
         score: 0,
         timeTaken: null,
@@ -3325,7 +3329,7 @@ socket.on('voice-ice', ({ roomId, candidate, to, from }) => {
       };
     }
 
-    console.log(`👥 Study room: User ${userName} joined room ${roomId}`);
+    console.log(`👥 Study room: User ${authUserName} joined room ${roomId}`);
     io.to(roomId).emit("study-room-updated", serializeRoom(room));
   });
 
