@@ -476,7 +476,7 @@ function authorizeRequest(req, pathname) {
 }
 
 function validateRequest(req) {
-  const allowedMethods = ["GET", "POST"];
+  const allowedMethods = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
   if (!allowedMethods.includes(req.method)) {
     return {
       valid: false,
