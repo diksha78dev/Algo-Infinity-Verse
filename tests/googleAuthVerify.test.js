@@ -27,7 +27,10 @@ const { server } = await import('../server.js');
 async function postGoogle(origin) {
   return fetch(`${origin}/api/auth/google`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Origin': origin
+    },
     body: JSON.stringify({ idToken: 'fake-token' }),
   });
 }

@@ -14,11 +14,27 @@ import { getSuggestions } from "./backend/resume-analyzer/suggestions.js";
 import { analyzeWorkflow } from "./backend/repository-analyzer/cicdValidator.js";
 import { VCSFactory } from "./backend/vcs/VCSFactory.js";
 import { enqueueBulkAudit, getBatchProgress, MAX_BULK_AUDIT_URLS } from "./backend/jobs/queue.js";
-import "./backend/jobs/worker.js"; // Initialize worker
-
+import "./backend/jobs/worker.js";
 import { parse as csvParse } from "csv-parse/sync";
 import { v4 as uuidv4 } from "uuid";
 import { generateSdlcAdvice } from "./sdlcAdvisor.js";
+
+const JUDGE0_LANGUAGE_IDS = {
+  python:      71,
+  javascript:  63,
+  java:        62,
+  'c++':       54,
+  cpp:         54,
+  c:           50,
+  typescript:  74,
+  go:          60,
+  rust:        73,
+  ruby:        72,
+  swift:       83,
+  dart:        98,
+  haskell:     89,
+  kotlin:      78,
+};
 import { handleReportRequest } from "./backend/reports/reportGenerator.js";
 import { getUserBenchmark } from "./backend/benchmarking/percentileService.js";
 import { Server as SocketIOServer } from "socket.io";
@@ -468,7 +484,6 @@ function authorizeRequest(req, pathname) {
       redirectTo: `/login?next=${encodeURIComponent(pathname)}`,
     };
   }
-
   return {
     authorized: true,
     session,
@@ -476,7 +491,7 @@ function authorizeRequest(req, pathname) {
 }
 
 function validateRequest(req) {
-  const allowedMethods = ["GET", "POST"];
+  const allowedMethods = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
   if (!allowedMethods.includes(req.method)) {
     return {
       valid: false,
@@ -484,10 +499,8 @@ function validateRequest(req) {
       message: "Method not allowed.",
     };
   }
-
   return { valid: true };
 }
-
 // ── CSRF protection ──────────────────────────────────────────────────────────
 // Previously a CSRF token was issued by /api/csrf-token but never checked, so
 // every state-changing request was unprotected. A mutating request is now
@@ -592,13 +605,6 @@ async function handleApi(req, res, pathname) {
         return sendJson(res, 400, { success: false, message: 'Source code and language are required.' });
       }
 
-      const languageMap = {
-        'javascript': { lang: 'nodejs', version: '4' },
-        'python': { lang: 'python3', version: '3' },
-        'cpp': { lang: 'cpp17', version: '0' },
-        'java': { lang: 'java', version: '4' },
-        'perl': { lang: 'perl', version: '0' }
-      };
 
       const languageId = JUDGE0_LANGUAGE_IDS[language.toLowerCase()];
 
@@ -2950,7 +2956,7 @@ async function serveStatic(req, res, pathname) {
   }
 }
 
-const server = http.createServer(async (req, res) => {
+async function requestHandler(req, res) {
   try {
     const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
     const pathname = normalizePathname(decodeURIComponent(url.pathname));
@@ -2982,7 +2988,9 @@ const server = http.createServer(async (req, res) => {
     console.error(error);
     sendJson(res, 500, { error: "Something went wrong." });
   }
-});
+}
+
+const server = http.createServer(requestHandler);
 
 // ===== CODE ANALYSIS ENGINE =====
 // Used by the POST /api/predict-acceptance route in handleApi().
@@ -3290,20 +3298,23 @@ socket.on('voice-ice', ({ roomId, candidate, to, from }) => {
 
 // ── END OF ADDITIONS ──
 
-
   // ── COLLABORATIVE STUDY ROOM EVENTS ──
   socket.on("join-study-room", async ({ roomId, userId, userName }) => {
+    const session = getSession(socket.request);
+    const authUserId = session ? session.sub : userId;
+    const authUserName = session ? session.name : userName;
+
     socket.join(roomId);
-    socket.userId = userId;
+    socket.userId = authUserId;
     socket.studyRoomId = roomId;
-    socket.userName = userName;
+    socket.userName = authUserName;
 
     let room = studyRooms.get(roomId);
     if (!room) {
       room = {
         id: roomId,
-        hostId: userId,
-        hostName: userName,
+        hostId: authUserId,
+        hostName: authUserName,
         config: { maxParticipants: 4, timerDuration: 600, difficulty: "Medium", topic: "arrays", problems: [] },
         status: "lobby",
         participants: {},
@@ -3314,10 +3325,10 @@ socket.on('voice-ice', ({ roomId, candidate, to, from }) => {
       studyRooms.set(roomId, room);
     }
 
-    if (!room.participants[userId]) {
-      room.participants[userId] = {
-        id: userId,
-        name: userName,
+    if (!room.participants[authUserId]) {
+      room.participants[authUserId] = {
+        id: authUserId,
+        name: authUserName,
         status: room.status === "playing" ? "solving" : "lobby",
         score: 0,
         timeTaken: null,
@@ -3325,10 +3336,9 @@ socket.on('voice-ice', ({ roomId, candidate, to, from }) => {
       };
     }
 
-    console.log(`👥 Study room: User ${userName} joined room ${roomId}`);
+    console.log(`👥 Study room: User ${authUserName} joined room ${roomId}`);
     io.to(roomId).emit("study-room-updated", serializeRoom(room));
   });
-
   socket.on("start-study-round", ({ roomId, problem }) => {
     const room = studyRooms.get(roomId);
     if (!room) return;
@@ -3422,7 +3432,7 @@ socket.on('voice-ice', ({ roomId, candidate, to, from }) => {
 });
 // -----------------------------------------
 
-export { server, hashPassword, passwordMatches, applySM2, validateSignup, updateMemoryStore, readMemoryStore };
+export { server, requestHandler, hashPassword, passwordMatches, applySM2, validateSignup, updateMemoryStore, readMemoryStore };
 if (process.env.VERCEL === "1") {
   db = initializeFirebase();
   useFirestore = !!db;
