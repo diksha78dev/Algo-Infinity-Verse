@@ -546,6 +546,152 @@
               </div>
             </div>
           </div>
+
+          <!-- STACK CHEAT SHEET -->
+          <div class="cheat-sheet-card glass-card animate-in" id="cs-stack">
+            <div class="card-header">
+              <span class="card-icon">📚</span>
+              <h2>Stack</h2>
+            </div>
+
+            <div class="card-body">
+              <div class="complexity-section">
+                <h3>Complexity Table</h3>
+                <div class="table-responsive">
+                  <table class="complexity-table">
+                    <thead>
+                      <tr>
+                        <th>Push</th>
+                        <th>Pop</th>
+                        <th>Peek/Top</th>
+                        <th>Search</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td class="time-o1">O(1)</td>
+                        <td class="time-o1">O(1)</td>
+                        <td class="time-o1">O(1)</td>
+                        <td class="time-on">O(n)</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="space-complexity">
+                  <span>Space Complexity (Average/Worst): </span><strong class="space-on">O(n)</strong>
+                </div>
+              </div>
+
+              <div class="details-section">
+                <div class="detail-block">
+                  <h4><i class="fas fa-cogs"></i> Common Operations</h4>
+                  <ul>
+                    <li><strong>Push:</strong> Add an element to the top of the stack.</li>
+                    <li><strong>Pop:</strong> Remove and return the top element.</li>
+                    <li><strong>Peek/Top:</strong> View the top element without removing it.</li>
+                  </ul>
+                </div>
+
+                <div class="detail-block">
+                  <h4><i class="fas fa-exclamation-circle"></i> Important Notes</h4>
+                  <ul>
+                    <li>Follows LIFO (Last In, First Out) ordering.</li>
+                    <li>Can be implemented using arrays or linked lists; array-based stacks risk overflow if size is fixed.</li>
+                  </ul>
+                </div>
+
+                <div class="detail-block">
+                  <h4><i class="fas fa-lightbulb"></i> Interview Tips</h4>
+                  <ul>
+                    <li>Think Stack when a problem involves matching/nesting (parentheses, brackets, tags).</li>
+                    <li>Recursive call stacks can often be converted to iterative solutions using an explicit Stack.</li>
+                  </ul>
+                </div>
+
+                <div class="detail-block">
+                  <h4><i class="fas fa-project-diagram"></i> Common Coding Patterns</h4>
+                  <ul>
+                    <li><strong>Monotonic Stack:</strong> Next Greater Element, Largest Rectangle in Histogram.</li>
+                    <li><strong>Balanced Parentheses:</strong> Valid Parentheses, Minimum Add to Make Valid.</li>
+                    <li><strong>DFS (Iterative):</strong> Tree/graph traversal without recursion.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- QUEUE CHEAT SHEET -->
+          <div class="cheat-sheet-card glass-card animate-in" id="cs-queue">
+            <div class="card-header">
+              <span class="card-icon">🚶</span>
+              <h2>Queue</h2>
+            </div>
+
+            <div class="card-body">
+              <div class="complexity-section">
+                <h3>Complexity Table</h3>
+                <div class="table-responsive">
+                  <table class="complexity-table">
+                    <thead>
+                      <tr>
+                        <th>Enqueue</th>
+                        <th>Dequeue</th>
+                        <th>Peek/Front</th>
+                        <th>Search</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td class="time-o1">O(1)</td>
+                        <td class="time-o1">O(1)</td>
+                        <td class="time-o1">O(1)</td>
+                        <td class="time-on">O(n)</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="space-complexity">
+                  <span>Space Complexity (Average/Worst): </span><strong class="space-on">O(n)</strong>
+                </div>
+              </div>
+
+              <div class="details-section">
+                <div class="detail-block">
+                  <h4><i class="fas fa-cogs"></i> Common Operations</h4>
+                  <ul>
+                    <li><strong>Enqueue:</strong> Add an element to the rear of the queue.</li>
+                    <li><strong>Dequeue:</strong> Remove and return the front element.</li>
+                    <li><strong>Peek/Front:</strong> View the front element without removing it.</li>
+                  </ul>
+                </div>
+
+                <div class="detail-block">
+                  <h4><i class="fas fa-exclamation-circle"></i> Important Notes</h4>
+                  <ul>
+                    <li>Follows FIFO (First In, First Out) ordering.</li>
+                    <li>Circular queues reuse freed space efficiently; naive array queues can suffer O(n) dequeue if not handled carefully.</li>
+                  </ul>
+                </div>
+
+                <div class="detail-block">
+                  <h4><i class="fas fa-lightbulb"></i> Interview Tips</h4>
+                  <ul>
+                    <li>Think Queue when a problem requires level-by-level or order-preserving processing.</li>
+                    <li>A Deque (double-ended queue) generalizes Queue/Stack and is useful in sliding window problems.</li>
+                  </ul>
+                </div>
+
+                <div class="detail-block">
+                  <h4><i class="fas fa-project-diagram"></i> Common Coding Patterns</h4>
+                  <ul>
+                    <li><strong>BFS (Queue):</strong> Shortest path, level-order traversal.</li>
+                    <li><strong>Monotonic Deque:</strong> Sliding Window Maximum.</li>
+                    <li><strong>Circular Queue:</strong> Task scheduling, buffering streams.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Pagination Container -->

@@ -109,7 +109,7 @@ app.post('/api/execute', async (req, res) => {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source_code: b64(source_code), language_id, stdin: b64(stdin) }),
+        body: JSON.stringify({ source_code: b64(source_code), language_id, stdin: b64(stdin), compiler_options: language_id === 54 ? '-std=c++17' : undefined }),
       }
     );
 

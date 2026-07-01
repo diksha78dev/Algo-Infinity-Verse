@@ -134,7 +134,27 @@
                         const result = new Function(`"use strict";\n${code}\nreturn solve();`)();
                         console.log = origLog;
                         const time = (performance.now() - start).toFixed(2);
-                        const outputText = `📤 Output:\n${logs.join('\n') || '(no output)'}\n\n✅ Result: ${result !== undefined ? result : 'Done'}\n\n⏱️ ${time}ms`;
+                        let complexityStr = '';
+                        try {
+                            if (typeof window.analyzeComplexity !== 'function') {
+                                await new Promise((resolve) => {
+                                    const script = document.createElement('script');
+                                    script.src = 'modules/complexity-client.js';
+                                    script.onload = resolve;
+                                    script.onerror = resolve;
+                                    document.head.appendChild(script);
+                                });
+                            }
+                            if (typeof window.analyzeComplexity === 'function') {
+                                const complexity = await window.analyzeComplexity(code);
+                                if (complexity) {
+                                    complexityStr = `\n\n📊 Time Complexity: ${complexity}`;
+                                }
+                            }
+                        } catch (err) {
+                            console.error("Complexity analysis failed", err);
+                        }
+                        const outputText = `📤 Output:\n${logs.join('\n') || '(no output)'}\n\n✅ Result: ${result !== undefined ? result : 'Done'}\n\n⏱️ ${time}ms${complexityStr}`;
                         setOutput(outputText, 'success');
                     } catch(e) {
                         console.log = origLog;

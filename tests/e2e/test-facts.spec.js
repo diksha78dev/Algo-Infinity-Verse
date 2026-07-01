@@ -23,7 +23,7 @@ test('check facts card', async ({ page }) => {
     });
   });
 
-  await page.goto('http://localhost:3000');
+  await page.goto('/');
   await page.waitForLoadState('networkidle');
 
   console.log('Current Page URL:', page.url());

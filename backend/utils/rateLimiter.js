@@ -183,6 +183,12 @@ export const sdlcAdvisorLimiter = new RateLimiter({
   cooldownMs: 15 * 60 * 1000,
 });
 
+export const complexityAnalysisLimiter = new RateLimiter({
+  windowMs: 15 * 60 * 1000,
+  maxAttempts: 20,
+  cooldownMs: 15 * 60 * 1000,
+});
+
 export const predictionLimiter = new RateLimiter({
   windowMs: 15 * 60 * 1000,
   maxAttempts: 30,
@@ -196,6 +202,15 @@ export const bulkAuditLimiter = new RateLimiter({
   maxAttempts: 5,
   cooldownMs: 60 * 60 * 1000,
   backoffType: 'exponential',
+});
+
+// Client error reports are written to an append-only log on disk. Without a
+// limit, an anonymous client could spam reports to inflate the file. Allow
+// generous normal use while capping abusive bursts.
+export const logErrorLimiter = new RateLimiter({
+  windowMs: 15 * 60 * 1000,
+  maxAttempts: 30,
+  cooldownMs: 15 * 60 * 1000,
 });
 
 // Centralized helper to check and apply rate limits on HTTP server requests

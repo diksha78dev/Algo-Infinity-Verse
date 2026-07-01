@@ -27,10 +27,16 @@ const { server } = await import('../server.js');
 async function postGoogle(origin) {
   return fetch(`${origin}/api/auth/google`, {
     method: 'POST',
+<<<<<<< HEAD
     headers: {
       'Content-Type': 'application/json',
       'Origin': origin
     },
+=======
+    // Origin matches the server host so the request passes the CSRF gate
+    // (same-origin), exactly as a real browser would send it.
+    headers: { 'Content-Type': 'application/json', Origin: origin },
+>>>>>>> upstream/main
     body: JSON.stringify({ idToken: 'fake-token' }),
   });
 }

@@ -10,7 +10,7 @@
  *  - Interactive Quiz
  */
 
-import { initQuiz } from './modules/quiz.js';
+import { initQuiz } from '../../../modules/quiz.js';
 
 document.addEventListener("DOMContentLoaded", () => {
   initHeroTyping();

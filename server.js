@@ -57,7 +57,8 @@ import {
   repoAnalysisLimiter,
   sdlcAdvisorLimiter,
   predictionLimiter,
-  bulkAuditLimiter
+  bulkAuditLimiter,
+  logErrorLimiter
 } from "./backend/utils/rateLimiter.js";
 import { applySM2 } from "./backend/services/memory.service.js";
 import { sendVerificationEmail } from "./backend/services/email.service.js";
@@ -106,6 +107,15 @@ const MEMORY_FILE = path.join(DATA_DIR, "memory.json");
 const TEAM_PROFILES_FILE = path.join(DATA_DIR, "team_profiles.json");
 const AUDITS_FILE = path.join(DATA_DIR, "audits_history.json");
 const EXECUTIONS_FILE = path.join(DATA_DIR, "executions.json");
+const CLIENT_ERRORS_FILE = path.join(DATA_DIR, "client_errors.json");
+const FEEDBACK_FILE = path.join(DATA_DIR, "feedback.json");
+const INTERVIEW_EXPERIENCES_FILE = path.join(DATA_DIR, "interview-experiences.json");
+
+// Caps for append-only JSON logs so they can never grow unbounded on disk.
+const MAX_CLIENT_ERROR_ENTRIES = 1000;
+const MAX_FEEDBACK_ENTRIES = 5000;
+const MAX_INTERVIEW_EXPERIENCE_ENTRIES = 5000;
+const MAX_AUDIT_HISTORY_ENTRIES = 1000;
 const SESSION_COOKIE = "aiv_session";
 const ACCESS_COOKIE = "aiv_access";
 const REFRESH_COOKIE = "aiv_refresh";
@@ -414,6 +424,43 @@ async function updateTeamProfilesStore(mutator) {
   return task;
 }
 
+// ── Serialized, size-capped JSON array append store ──────────────────────────
+// Append-style endpoints (client error logs, feedback, interview experiences,
+// audit history) previously did an unserialized readFile → parse → push →
+// writeFile. Under concurrency those interleave and silently drop entries
+// (lost writes), and they grow without bound — the anonymous /api/log-error
+// route is a disk-fill DoS. This helper serializes each file's read-modify-write
+// through a per-file promise chain (mirroring updateMemoryStore), writes
+// atomically via a temp file + rename, and caps the array to its most recent
+// `maxEntries` so the file can never grow unbounded.
+const jsonArrayWriteQueues = new Map();
+
+function appendToJsonArrayFile(filePath, entry, maxEntries = 1000) {
+  const previous = jsonArrayWriteQueues.get(filePath) || Promise.resolve();
+  const task = previous.then(async () => {
+    await fs.mkdir(DATA_DIR, { recursive: true });
+    let list = [];
+    try {
+      const raw = await fs.readFile(filePath, "utf8");
+      list = JSON.parse(raw || "[]");
+      if (!Array.isArray(list)) list = [];
+    } catch (err) {
+      if (err.code !== "ENOENT") throw err;
+    }
+    list.push(entry);
+    if (list.length > maxEntries) {
+      list = list.slice(list.length - maxEntries);
+    }
+    const tmpPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+    await fs.writeFile(tmpPath, `${JSON.stringify(list, null, 2)}\n`);
+    await fs.rename(tmpPath, filePath);
+    return entry;
+  });
+  // Keep the chain alive even if one write rejects, so later writes still run.
+  jsonArrayWriteQueues.set(filePath, task.catch(() => {}));
+  return task;
+}
+
 // ──────────────────────────────────────────────────────────────────────────
 
 async function readJsonBody(req) {
@@ -548,19 +595,14 @@ async function handleApi(req, res, pathname) {
   }
 
   if (pathname === "/api/log-error" && req.method === "POST") {
+    // Anonymous + append-only: rate-limit to curb write-flooding abuse. The
+    // capped, serialized write below bounds disk use regardless.
+    if (!applyRateLimit(req, res, logErrorLimiter, "Too many error reports. Please try again later.")) {
+      return;
+    }
     try {
       const payload = await readJsonBody(req);
-      const logFile = path.join(DATA_DIR, "client_errors.json");
-      await fs.mkdir(DATA_DIR, { recursive: true });
-      let currentLogs = [];
-      try {
-        const raw = await fs.readFile(logFile, "utf8");
-        currentLogs = JSON.parse(raw || "[]");
-      } catch (e) {
-        // file might not exist
-      }
-      currentLogs.push(payload);
-      await fs.writeFile(logFile, `${JSON.stringify(currentLogs, null, 2)}\n`);
+      await appendToJsonArrayFile(CLIENT_ERRORS_FILE, payload, MAX_CLIENT_ERROR_ENTRIES);
       return sendJson(res, 200, { success: true });
     } catch (err) {
       console.error("Error logging client error:", err);
@@ -605,6 +647,10 @@ async function handleApi(req, res, pathname) {
         return sendJson(res, 400, { success: false, message: 'Source code and language are required.' });
       }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/main
 
       const languageId = JUDGE0_LANGUAGE_IDS[language.toLowerCase()];
 
@@ -629,6 +675,7 @@ async function handleApi(req, res, pathname) {
             source_code: b64(sourceCode),
             language_id: languageId,
             stdin: b64(stdin || ""),
+            compiler_options: languageId === 54 ? '-std=c++17' : undefined,
           })
         });
 
@@ -738,10 +785,18 @@ async function handleApi(req, res, pathname) {
       try {
         await fs.writeFile(tmpFile, instrumented, "utf8");
         await new Promise((resolve, reject) => {
-          execFile("node", [tmpFile], {
+          // Sandbox the user-submitted code: instrumentJS does NOT isolate it,
+          // so run it under Node's Permission Model (--permission denies fs,
+          // child_process, worker_threads and native addons) with an empty
+          // environment so the child cannot read server secrets (SESSION_SECRET,
+          // Firebase keys, etc.). process.execPath is used directly so the
+          // binary resolves without a PATH in the stripped env. This blocks the
+          // RCE / secret-exfiltration path while still allowing console output
+          // and the snapshot JSON written to stdout.
+          execFile(process.execPath, ["--permission", tmpFile], {
             timeout: 10000,
             maxBuffer: 1024 * 1024,
-            env: { ...process.env, NODE_OPTIONS: "" },
+            env: {},
           }, (err, stdout, stderr) => {
             if (stdout) {
               try {
@@ -984,13 +1039,13 @@ async function handleApi(req, res, pathname) {
   if (
     pathname === "/api/debug-env" &&
     req.method === "GET" &&
-    process.env.NODE_ENV !== "production"
+    process.env.ENABLE_DEBUG_ENV === "true"
   ) {
     const keys = ["FIREBASE_API_KEY","FIREBASE_AUTH_DOMAIN","FIREBASE_PROJECT_ID","FIREBASE_STORAGE_BUCKET","FIREBASE_MESSAGING_SENDER_ID","FIREBASE_APP_ID","FIREBASE_CLIENT_EMAIL","FIREBASE_PRIVATE_KEY","SESSION_SECRET"];
     const vars = {};
     keys.forEach(k => {
       const v = process.env[k];
-      vars[k] = v ? v.slice(0, 6) + "..." + v.slice(-4) : "(not set)";
+      vars[k] = Boolean(process.env[k]);
     });
     return sendJson(res, 200, vars);
   }
@@ -1320,7 +1375,8 @@ if (pathname === "/api/session" && req.method === "GET") {
       const password = String(payload.password || "");
       const user = await getUserByEmail(email);
       if (!user || !user.password || !passwordMatches(password, user.password)) {
-        return sendJson(res, 401, { error: "Invalid email or password." });
+       console.warn(`[LOGIN FAILED] ${email}`);
+      return sendJson(res, 401, { error: "Invalid email or password." });
       }
 
       if (!user.emailVerified) {
@@ -1718,17 +1774,19 @@ if (pathname === "/api/forgot-password" && req.method === "POST") {
       const { initializeApp, getApps } = await import("firebase/app");
       const { getAuth, sendPasswordResetEmail } = await import("firebase/auth");
 
-      const configRes = await fetch(`http://127.0.0.1:${process.env.PORT || 3000}/api/firebase-config`);
-      const firebaseConfig = await configRes.json();
+      const firebaseConfig = {
+        apiKey: process.env.FIREBASE_API_KEY,
+        authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+        appId: process.env.FIREBASE_APP_ID,
+      };
 
-      if (firebaseConfig.configured) {
+      if (firebaseConfig.projectId) {
         const existingApps = getApps();
         const clientApp = existingApps.find(a => a.name === "reset-client") ||
-          initializeApp({
-            apiKey: firebaseConfig.apiKey,
-            authDomain: firebaseConfig.authDomain,
-            projectId: firebaseConfig.projectId,
-          }, "reset-client");
+          initializeApp(firebaseConfig, "reset-client");
 
         const auth = getAuth(clientApp);
         await sendPasswordResetEmail(auth, email);
@@ -1741,15 +1799,6 @@ if (pathname === "/api/forgot-password" && req.method === "POST") {
     // Always return success to prevent email enumeration
     return sendJson(res, 200, { message: "Reset email sent if account exists." });
   }
-  if (pathname === "/api/logout" && req.method === "POST") {
-    return sendJson(
-      res,
-      200,
-      { ok: true },
-      { "Set-Cookie": clearAuthCookies() },
-    );
-  }
-
   if (pathname === "/api/feedback" && req.method === "POST") {
     const session = getSession(req);
     let payload;
@@ -1814,21 +1863,8 @@ if (pathname === "/api/forgot-password" && req.method === "POST") {
         const docRef = await db.collection("feedback").add(feedbackData);
         feedbackData.id = docRef.id;
       } else {
-        const feedbackFile = path.join(DATA_DIR, "feedback.json");
-        await fs.mkdir(DATA_DIR, { recursive: true });
-        let feedbackList = [];
-        try {
-          const raw = await fs.readFile(feedbackFile, "utf8");
-          feedbackList = JSON.parse(raw || "[]");
-        } catch (err) {
-          if (err.code !== "ENOENT") throw err;
-        }
         feedbackData.id = crypto.randomUUID();
-        feedbackList.push(feedbackData);
-        await fs.writeFile(
-          feedbackFile,
-          JSON.stringify(feedbackList, null, 2) + "\n",
-        );
+        await appendToJsonArrayFile(FEEDBACK_FILE, feedbackData, MAX_FEEDBACK_ENTRIES);
       }
 
       return sendJson(res, 201, { success: true, feedback: feedbackData });
@@ -1929,17 +1965,11 @@ if (pathname === "/api/forgot-password" && req.method === "POST") {
           .add(experienceData);
         experienceData.id = docRef.id;
       } else {
-        const filePath = path.join(DATA_DIR, "interview-experiences.json");
-        await fs.mkdir(DATA_DIR, { recursive: true });
-        let list = [];
-        try {
-          const raw = await fs.readFile(filePath, "utf8");
-          list = JSON.parse(raw || "[]");
-        } catch (err) {
-          if (err.code !== "ENOENT") throw err;
-        }
-        list.push(experienceData);
-        await fs.writeFile(filePath, JSON.stringify(list, null, 2) + "\n");
+        await appendToJsonArrayFile(
+          INTERVIEW_EXPERIENCES_FILE,
+          experienceData,
+          MAX_INTERVIEW_EXPERIENCE_ENTRIES,
+        );
       }
       return sendJson(res, 201, { success: true, experience: experienceData });
     } catch (err) {
@@ -1970,9 +2000,7 @@ if (pathname === "/api/forgot-password" && req.method === "POST") {
       if (useFirestore) {
         await db.collection(COLLECTIONS.AUDITS_HISTORY).doc(auditData.auditId).set(auditData);
       } else {
-        const audits = await readAudits();
-        audits.push(auditData);
-        await writeAudits(audits);
+        await appendToJsonArrayFile(AUDITS_FILE, auditData, MAX_AUDIT_HISTORY_ENTRIES);
       }
 
       return sendJson(res, 201, { success: true, auditId: auditData.auditId });
@@ -2357,7 +2385,13 @@ if (pathname === "/api/forgot-password" && req.method === "POST") {
     try { payload = await readJsonBody(req); } catch { return sendJson(res, 400, { error: "Invalid JSON." }); }
 
     const existing = payload.existing || { repetitions: 0, easeFactor: 2.5, interval: 0 };
-    const quality = parseInt(payload.quality) !== undefined ? parseInt(payload.quality) : 3;
+    // parseInt() returns NaN (never undefined) for missing/non-numeric input,
+    // so guard with Number.isInteger and fall back to the SM-2 default of 3,
+    // clamped to the valid quality range (0-5) — otherwise applySM2 persists NaN.
+    const parsedQuality = Number.parseInt(payload.quality, 10);
+    const quality = Number.isInteger(parsedQuality)
+      ? Math.max(0, Math.min(5, parsedQuality))
+      : 3;
     const updated = applySM2(existing, quality);
     updated.problemId = parseInt(problemId) || 0;
 
@@ -2785,9 +2819,12 @@ function resolveStaticPath(pathname) {
 const routes = {
   "/": "index.html",
   "/login": "pages/auth/login.html",
+  "/login.html": "pages/auth/login.html",
   "/profile": "pages/profile/public-profile.html",
   "/signup": "pages/auth/signup.html",
+  "/signup.html": "pages/auth/signup.html",
   "/verify-email": "pages/auth/verify-email.html",
+  "/verify-email.html": "pages/auth/verify-email.html",
     "/community": "community.html",
     "/python-learning": "python-learning.html",
     "/javascript-learning": "javascript-learning.html",
@@ -3326,7 +3363,11 @@ socket.on('voice-ice', ({ roomId, candidate, to, from }) => {
     }
 
     if (!room.participants[authUserId]) {
+<<<<<<< HEAD
       room.participants[authUserId] = {
+=======
+      room.participants[authUserId] = { 
+>>>>>>> upstream/main
         id: authUserId,
         name: authUserName,
         status: room.status === "playing" ? "solving" : "lobby",
@@ -3432,7 +3473,11 @@ socket.on('voice-ice', ({ roomId, candidate, to, from }) => {
 });
 // -----------------------------------------
 
+<<<<<<< HEAD
 export { server, requestHandler, hashPassword, passwordMatches, applySM2, validateSignup, updateMemoryStore, readMemoryStore };
+=======
+export { server, requestHandler, hashPassword, passwordMatches, applySM2, validateSignup, updateMemoryStore, readMemoryStore, appendToJsonArrayFile };
+>>>>>>> upstream/main
 if (process.env.VERCEL === "1") {
   db = initializeFirebase();
   useFirestore = !!db;
@@ -3475,4 +3520,4 @@ if (process.env.VERCEL !== "1" && process.env.NODE_ENV !== "test") {
       console.error("Failed to load environment configuration:", error);
       process.exit(1);
     });
-}
+  }

@@ -38,10 +38,14 @@ describe('Token refresh round-trip (#1225)', () => {
     const password = 'ValidPass123';
     const res = await fetch(`${origin}/api/signup`, {
       method: 'POST',
+<<<<<<< HEAD
       headers: {
         'Content-Type': 'application/json',
         'Origin': origin
       },
+=======
+      headers: { 'Content-Type': 'application/json', Origin: origin },
+>>>>>>> upstream/main
       body: JSON.stringify({
         name: 'Refresh Tester',
         email: `reftest-signup-${Date.now()}@example.com`,
@@ -60,10 +64,14 @@ describe('Token refresh round-trip (#1225)', () => {
     // 1. Sign up to obtain a real refresh cookie.
     const signupRes = await fetch(`${origin}/api/signup`, {
       method: 'POST',
+<<<<<<< HEAD
       headers: {
         'Content-Type': 'application/json',
         'Origin': origin
       },
+=======
+      headers: { 'Content-Type': 'application/json', Origin: origin },
+>>>>>>> upstream/main
       body: JSON.stringify({
         name: 'Refresh Roundtrip',
         email: `reftest-roundtrip-${Date.now()}@example.com`,
@@ -78,10 +86,14 @@ describe('Token refresh round-trip (#1225)', () => {
     // 2. Exchange the refresh cookie for a fresh session.
     const refreshRes = await fetch(`${origin}/api/refresh`, {
       method: 'POST',
+<<<<<<< HEAD
       headers: {
         Cookie: refreshCookie,
         'Origin': origin
       },
+=======
+      headers: { Cookie: refreshCookie, Origin: origin },
+>>>>>>> upstream/main
     });
     expect(refreshRes.status).toBe(200);
     const rotated = refreshRes.headers.getSetCookie();
@@ -100,7 +112,11 @@ describe('Token refresh round-trip (#1225)', () => {
   it('rejects /api/refresh when no refresh cookie is present', async () => {
     const res = await fetch(`${origin}/api/refresh`, {
       method: 'POST',
+<<<<<<< HEAD
       headers: { 'Origin': origin }
+=======
+      headers: { Origin: origin },
+>>>>>>> upstream/main
     });
     expect(res.status).toBe(401);
   });

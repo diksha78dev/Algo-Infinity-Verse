@@ -23,6 +23,8 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     env: {
       PORT: '4000',
+      SESSION_SECRET: 'dev-session-secret-must-be-long-and-random-32-chars',
+      PASSWORD_PEPPER: 'dev-password-pepper-must-be-long-and-random-32-chars',
     },
   },
 });
