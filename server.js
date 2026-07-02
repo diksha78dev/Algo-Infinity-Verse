@@ -647,11 +647,6 @@ async function handleApi(req, res, pathname) {
         return sendJson(res, 400, { success: false, message: 'Source code and language are required.' });
       }
 
-<<<<<<< HEAD
-=======
-
->>>>>>> upstream/main
-
       const languageId = JUDGE0_LANGUAGE_IDS[language.toLowerCase()];
 
       if (!languageId) {
@@ -3363,11 +3358,7 @@ socket.on('voice-ice', ({ roomId, candidate, to, from }) => {
     }
 
     if (!room.participants[authUserId]) {
-<<<<<<< HEAD
       room.participants[authUserId] = {
-=======
-      room.participants[authUserId] = { 
->>>>>>> upstream/main
         id: authUserId,
         name: authUserName,
         status: room.status === "playing" ? "solving" : "lobby",
@@ -3473,11 +3464,7 @@ socket.on('voice-ice', ({ roomId, candidate, to, from }) => {
 });
 // -----------------------------------------
 
-<<<<<<< HEAD
-export { server, requestHandler, hashPassword, passwordMatches, applySM2, validateSignup, updateMemoryStore, readMemoryStore };
-=======
 export { server, requestHandler, hashPassword, passwordMatches, applySM2, validateSignup, updateMemoryStore, readMemoryStore, appendToJsonArrayFile };
->>>>>>> upstream/main
 if (process.env.VERCEL === "1") {
   db = initializeFirebase();
   useFirestore = !!db;

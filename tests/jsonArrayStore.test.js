@@ -7,6 +7,7 @@ import path from 'path';
 jest.unstable_mockModule('../backend/jobs/queue.js', () => ({
   enqueueBulkAudit: jest.fn(),
   getBatchProgress: jest.fn(),
+  MAX_BULK_AUDIT_URLS: 50,
   batchStore: new Map(),
   bulkAuditQueue: { add: jest.fn(), on: jest.fn() },
   default: {},
