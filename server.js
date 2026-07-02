@@ -1364,11 +1364,15 @@ if (pathname === "/api/session" && req.method === "GET") {
         createdAt: new Date().toISOString(),
         isDeactivated: false,
         deactivatedAt: null,
-        emailVerified: true,
+        emailVerified: false,
         verifyToken,
         verifyTokenExpiry: Date.now() + 24 * 60 * 60 * 1000,
       };
       await createUser(user);
+
+      sendVerificationEmail(email, user.name, verifyToken).catch((err) =>
+        console.error("[email] Signup verification failed:", err)
+      );
 
       const token = createAccessToken(user);
       const refreshToken = createRefreshToken(user);
