@@ -122,6 +122,7 @@ const MAX_CLIENT_ERROR_ENTRIES = 1000;
 const MAX_FEEDBACK_ENTRIES = 5000;
 const MAX_INTERVIEW_EXPERIENCE_ENTRIES = 5000;
 const MAX_AUDIT_HISTORY_ENTRIES = 1000;
+const MAX_EXECUTIONS_ENTRIES = 5000;
 const SESSION_COOKIE = "aiv_session";
 const ACCESS_COOKIE = "aiv_access";
 const REFRESH_COOKIE = "aiv_refresh";
@@ -346,6 +347,9 @@ async function updateExecutionStore(mutator) {
     const raw = await fs.readFile(EXECUTIONS_FILE, "utf8");
     const store = JSON.parse(raw || "[]");
     const result = await mutator(store);
+    if (store.length > MAX_EXECUTIONS_ENTRIES) {
+      store.splice(0, store.length - MAX_EXECUTIONS_ENTRIES);
+    }
     await writeExecutionsAtomic(store);
     return result;
   });
