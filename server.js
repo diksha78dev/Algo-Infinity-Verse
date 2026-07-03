@@ -101,6 +101,8 @@ function validateMagicBytes(buffer, mimeType) {
 const userSocketMap = new Map();
 const studyRooms = new Map();
 const memoryUserStore = new Map();
+let userCacheTimestamp = 0;
+let userCacheDirty = true;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = __dirname;
@@ -272,11 +274,21 @@ async function ensureUserStore() {
 }
 
 async function readUsers() {
+  if (!userCacheDirty && memoryUserStore.size > 0) {
+    return Array.from(memoryUserStore.values());
+  }
   await ensureUserStore();
   try {
+    const stat = await fs.stat(USERS_FILE);
+    if (!userCacheDirty && stat.mtimeMs <= userCacheTimestamp) {
+      return Array.from(memoryUserStore.values());
+    }
     const raw = await fs.readFile(USERS_FILE, "utf8");
     const users = JSON.parse(raw || "[]");
+    memoryUserStore.clear();
     users.forEach((u) => memoryUserStore.set(u.email, u));
+    userCacheTimestamp = stat.mtimeMs;
+    userCacheDirty = false;
     return users;
   } catch (err) {
     console.error("[readUsers] Failed to read users:", err);
@@ -288,10 +300,9 @@ async function writeUsers(users) {
   await ensureUserStore();
   try {
     await fs.writeFile(USERS_FILE, `${JSON.stringify(users, null, 2)}\n`);
-    users.forEach((u) => memoryUserStore.set(u.email, u));
+    userCacheDirty = true;
   } catch (err) {
     console.error("[writeUsers] Failed to write users:", err);
-    users.forEach((u) => memoryUserStore.set(u.email, u));
   }
 }
 
