@@ -2860,6 +2860,78 @@ if (pathname === "/api/forgot-password" && req.method === "POST") {
     }
   }
 
+  // ── Leaderboard ──────────────────────────────────────────────────────────
+  if (pathname === "/api/leaderboard" && req.method === "GET") {
+    try {
+      let leaders = [];
+      if (useFirestore) {
+        const usersSnap = await db.collection("users").get();
+        leaders = usersSnap.docs.map(doc => {
+          const d = doc.data();
+          return { id: doc.id, name: d.name || "Learner", xp: d.xp || 0, level: d.level || 1, avatar: d.avatar || "🚀" };
+        });
+      } else {
+        const users = await readUsers();
+        leaders = users.map(u => ({
+          id: u.id || u.email,
+          name: u.name || "Learner",
+          xp: u.xp || 0,
+          level: u.level || 1,
+          avatar: u.avatar || "🚀"
+        }));
+      }
+      const session = getSession(req);
+      return sendJson(res, 200, { leaders, currentUserId: session?.sub || null });
+    } catch (err) {
+      console.error("Leaderboard error:", err);
+      return sendJson(res, 200, { leaders: [], currentUserId: null });
+    }
+  }
+
+  // ── User Progress Sync ───────────────────────────────────────────────────
+  if (pathname === "/api/progress" && req.method === "PUT") {
+    const session = getSession(req);
+    if (!session) return sendJson(res, 401, { error: "Authentication required." });
+    try {
+      const body = await readJsonBody(req);
+      if (useFirestore) {
+         await db.collection("users").doc(session.sub).set({
+           name: body.name,
+           xp: body.xp || 0,
+           level: body.level || 1,
+           avatar: body.avatar || "🚀",
+           activityData: body.activityData || {},
+           updatedAt: new Date().toISOString()
+         }, { merge: true });
+      } else {
+        const users = await readUsers();
+        const idx = users.findIndex(u => u.id === session.sub || u.email === session.email);
+         if (idx !== -1) {
+           users[idx].name = body.name;
+           users[idx].xp = body.xp || 0;
+           users[idx].level = body.level || 1;
+           users[idx].avatar = body.avatar || "🚀";
+           if (body.activityData) users[idx].activityData = body.activityData;
+         } else {
+           users.push({
+             id: session.sub,
+             email: session.email,
+             name: body.name,
+             xp: body.xp || 0,
+             level: body.level || 1,
+             avatar: body.avatar || "🚀",
+             activityData: body.activityData || {}
+           });
+         }
+        await writeUsers(users);
+      }
+      return sendJson(res, 200, { success: true });
+    } catch (err) {
+      console.error("Progress sync error:", err);
+      return sendJson(res, 200, { success: false });
+    }
+  }
+
   return sendJson(res, 404, { error: "Not found." });
 }
 
@@ -2906,7 +2978,7 @@ const routes = {
   // 1. Block hidden files and sensitive directories
   if (
     fileName.startsWith(".") ||
-    rel.startsWith("data" + path.sep) ||
+    (rel.startsWith("data" + path.sep) && !fileName.endsWith(".js")) ||
     rel.startsWith("api" + path.sep) ||
     rel.startsWith("node_modules" + path.sep)
   ) {

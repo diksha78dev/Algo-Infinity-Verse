@@ -67,7 +67,7 @@ self.addEventListener('fetch', (event) => {
           if (isCacheable(res)) tryCache(event.request, res, DYNAMIC_CACHE);
           return res;
         })
-        .catch(() => caches.match(event.request))
+        .catch(() => caches.match(event.request).then(cached => cached || new Response('Offline', { status: 503 })))
     );
     return;
   }
@@ -80,7 +80,7 @@ self.addEventListener('fetch', (event) => {
           if (isCacheable(res)) tryCache(event.request, res, CACHE_NAME);
           return res;
         })
-        .catch(() => undefined);
+        .catch(() => new Response('Offline', { status: 503 }));
 
       return cached || fetchPromise;
     })
