@@ -3331,7 +3331,7 @@ function validateSocketInput(data, schema) {
     if (rules.required && !(key in data)) return null;
     if (key in data) {
       let val = data[key];
-      if (rules.type && typeof val !== rules.type) return null;
+      if (rules.type && (val === null || typeof val !== rules.type)) return null;
       if (rules.string && typeof val === 'string') {
         val = val.slice(0, rules.maxLength || MAX_TEXT_LENGTH);
         val = val.replace(/[\x00-\x1F\x7F]/g, '');
