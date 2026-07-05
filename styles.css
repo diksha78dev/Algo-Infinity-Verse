@@ -10848,24 +10848,21 @@ mark.search-highlight {
     .back-to-top::after {
         display: none;
 
-    }
-}
-.dark .shortcuts-tip kbd {
-    background: #0f172a;
-    border-color: #334155;
-    color: #f1f5f9;
-}
-/* Modal Open State */
-body.modal-open {
-    overflow: hidden;
-
-  }
-
-
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  text-decoration: none !important;
+  background: var(--gradient-1) !important;
+  color: `#ffffff` !important;
+  border: none !important;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-}
-
+.nav-cta .nav-cta-btn.btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5) !important;
 .contributors-controls {
   display: flex;
   flex-wrap: wrap;
