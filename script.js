@@ -752,9 +752,7 @@ async function runPerl() {
 document.addEventListener('DOMContentLoaded', () => {
   const path = window.location.pathname;
   if (path.includes('/pages/learning/') || path.includes('/pages/visualizers/') || path.includes('/pages/resources/')) {
-    const script = document.createElement('script');
-    script.src = '/scripts/report-issue.js';
-    document.body.appendChild(script);
+    import('/scripts/report-issue.js').catch(err => console.error('Failed to dynamically import report issue script:', err));
   }
 });
 
