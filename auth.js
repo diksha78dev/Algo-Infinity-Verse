@@ -204,6 +204,7 @@
       if (!logoutButton) return;
 
       event.preventDefault();
+      if (!confirm("Are you sure you want to logout?")) return;
       logoutButton.disabled = true;
 
       if (location.protocol !== "file:") {
