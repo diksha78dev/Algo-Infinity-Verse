@@ -3243,8 +3243,9 @@ function analyzeCode(code, language, problemId) {
 // ===== HELPER FUNCTIONS =====
 
 function checkTimeComplexity(code) {
-    // Detect nested loops
-    const nestedLoops = (code.match(/for/g) || []).length > 1;
+    // Remove comments and string literals, then detect nested loops using word boundaries
+    const sanitizedCode = code.replace(/\/\/.*|#.*|\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`/g, '');
+    const nestedLoops = (sanitizedCode.match(/\bfor\b/g) || []).length > 1;
     if (nestedLoops) {
         return { risky: true, reason: 'Nested loops detected (O(n²) or worse)' };
     }
@@ -3298,6 +3299,13 @@ function checkSyntaxErrors(code, language) {
 }
 
 function checkMissingImports(code, language) {
+    if (language) {
+        const lang = language.toLowerCase();
+        // Snippet-based testing environments generally do not require explicit imports
+        if (['python', 'javascript', 'cpp', 'c', 'java', 'ruby', 'go', 'rust', 'c++', 'py', 'js'].includes(lang)) {
+            return false;
+        }
+    }
     const imports = ['import', 'require', 'include', '#include'];
     const hasImport = imports.some(i => code.includes(i));
     return !hasImport;
