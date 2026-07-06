@@ -249,10 +249,26 @@ function runWorker(harnessCode, timeoutMs) {
 function setOutput(text, type) {
   const el = document.getElementById("quizOutputContent");
   if (!el) return;
-  if (type === "running") el.innerHTML = '<p class="output-running">⏳ Running code...</p>';
-  else if (type === "error") el.innerHTML = '<pre class="output-error">❌ Error:\n' + text + '</pre>';
-  else if (type === "success") el.innerHTML = '<pre class="output-success">✅ ' + text + '</pre>';
-  else el.innerHTML = '<pre>' + text + '</pre>';
+  
+  if (type === "running") {
+    el.innerHTML = '<p class="output-running">⏳ Running code...</p>';
+    return;
+  }
+  
+  el.innerHTML = '';
+  const pre = document.createElement("pre");
+  
+  if (type === "error") {
+    pre.className = "output-error";
+    pre.textContent = "❌ Error:\n" + text;
+  } else if (type === "success") {
+    pre.className = "output-success";
+    pre.textContent = "✅ " + text;
+  } else {
+    pre.textContent = text;
+  }
+  
+  el.appendChild(pre);
 }
 
 function getProblemSignature(problem) {

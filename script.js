@@ -666,7 +666,13 @@ async function runQuizCode() {
     if (result.metrics && result.metrics.cpuTime) {
       const metricText = `\n\n⏱️ Execution Time: ${result.metrics.cpuTime} sec\n💾 Memory Used: ${result.metrics.memory} KB`;
       const el = document.getElementById("quizOutputContent");
-      if (el) el.innerHTML += `<pre style="color:var(--accent); margin-top:10px;">${metricText}</pre>`;
+      if (el) {
+        const pre = document.createElement("pre");
+        pre.style.color = "var(--accent)";
+        pre.style.marginTop = "10px";
+        pre.textContent = metricText;
+        el.appendChild(pre);
+      }
     }
   } catch (e) {
     renderTestCases(testCases);
