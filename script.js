@@ -1616,22 +1616,12 @@ document.addEventListener('DOMContentLoaded', function() {
     initActivityFeed();
 });
 
-// Export functions
-export {
-    getActivities,
-    getRecentActivities,
-    addActivity,
-    clearActivities,
-    renderActivityFeed,
-    trackProblemSolved,
-    trackQuizCompleted,
-    trackBadgeEarned,
-    trackStreakMilestone,
-    trackLevelUp,
-    trackXPEarned,
-    trackPractice,
-    initActivityFeed
-};
+// This file is loaded via a classic <script> tag (not a module), so it
+// cannot use `export`. Its top-level function declarations above
+// (getActivities, getRecentActivities, addActivity, clearActivities,
+// renderActivityFeed, trackProblemSolved, trackQuizCompleted,
+// trackBadgeEarned, trackStreakMilestone, trackLevelUp, trackXPEarned,
+// trackPractice, initActivityFeed) are already globally accessible.
 
 // In your quiz completion function
 function completeQuiz(topic, score) {
@@ -1663,7 +1653,7 @@ function updateStreak() {
         trackStreakMilestone(userProgress.streak);
     }
     // ... existing code ...
-
+}
 
 // ============================================
 // PROBLEM FILTERING WITH CORRECT COUNT
@@ -1880,8 +1870,4 @@ function updateProblemCount(filteredProblems) {
     if (countElement) {
         countElement.textContent = `${total} problem${total !== 1 ? 's' : ''}`;
     }
-
-
-}
-
 }
