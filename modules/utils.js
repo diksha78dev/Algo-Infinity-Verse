@@ -56,7 +56,7 @@ function getDifficultyClass(difficulty) {
 /**
  * Calculates the current day of the year.
  *
- * @returns {number} The current day of the year (0-365).
+ * `@returns` {number} The current day of the year (1-366).
  */
 function getDayOfYear() {
   const now = new Date();
