@@ -11,6 +11,13 @@ export function initLoadingScreen() {
         return;
     }
 
+    // Skip loading animation on non-landing pages (all individual visualizers)
+    if (!document.body.hasAttribute('data-no-loading')) {
+        loadingScreen.classList.add("hidden");
+        initializeAnimations();
+        return;
+    }
+
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     
     if (prefersReducedMotion) {
