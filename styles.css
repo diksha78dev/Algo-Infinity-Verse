@@ -1231,6 +1231,12 @@ html.light-mode .recent-item.selected {
   margin: 0.5rem 0;
 }
 
+/* ─── Navbar highlight for landing page links ─── */
+.nav-highlight-item {
+  color: var(--accent-color, #f59e0b) !important;
+  font-weight: 600 !important;
+}
+
 .nav-auth-link {
   display: inline-flex;
   align-items: center;

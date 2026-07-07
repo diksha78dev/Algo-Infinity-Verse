@@ -1,195 +1,17 @@
-// ============================================
-// ABORT MANAGER
-// ============================================
-/**
- * Manages AbortControllers to allow cancellation of ongoing requests.
- */
-class AbortManager {
-  constructor() {
-    this.controllers = new Map();
-  }
-  /**
-   * Retrieves an AbortSignal for the given key, cancelling any previous request with the same key.
-   *
-   * @param {string} key - The unique identifier for the request.
-   * @returns {AbortSignal} The signal to pass to the fetch API.
-   */
-  getSignal(key) {
-    if (this.controllers.has(key)) {
-      this.controllers.get(key).abort();
-    }
-    const controller = new AbortController();
-    this.controllers.set(key, controller);
-    return controller.signal;
-  }
-  /**
-   * Removes the AbortController associated with the given key.
-   *
-   * @param {string} key - The unique identifier for the request.
-   */
-  clearSignal(key) {
-    this.controllers.delete(key);
-  }
-}
+// Nuke all caches on every page load — ensures fresh content always
+(async function nukeCaches() {
+  try {
+    // Delete IndexedDB cache
+    indexedDB.deleteDatabase('AlgoInfinityCache');
+  } catch (e) {}
+  try {
+    // Unregister all service workers
+    const regs = await navigator.serviceWorker?.getRegistrations();
+    if (regs) for (const r of regs) await r.unregister();
+  } catch (e) {}
+})();
 
-const apiAbort = new AbortManager();
 
-// ============================================
-// CACHE MANAGER (IndexedDB)
-// ============================================
-/**
- * Manages caching of API responses and partials using IndexedDB.
- */
-class CacheManager {
-  constructor(dbName = 'AlgoInfinityCache', storeName = 'api_responses') {
-    this.dbName = dbName;
-    this.storeName = storeName;
-    this.dbPromise = this.initDB();
-  }
-
-  /**
-   * Initializes the IndexedDB database.
-   *
-   * @returns {Promise<IDBDatabase>} The initialized database instance.
-   */
-  initDB() {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, 1);
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result);
-      request.onupgradeneeded = (e) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains(this.storeName)) {
-          db.createObjectStore(this.storeName, { keyPath: 'url' });
-        }
-      };
-    });
-  }
-
-  /**
-   * Stores data in the cache.
-   *
-   * @param {string} url - The URL key for the cached data.
-   * @param {any} data - The data to cache.
-   * @param {string} [type='json'] - The type of data being cached ('json' or 'text').
-   * @param {number} [ttlMs=3600000] - Time to live in milliseconds.
-   * @returns {Promise<void>}
-   */
-  async set(url, data, type = 'json', ttlMs = 3600000) {
-    try {
-      const db = await this.dbPromise;
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(this.storeName, 'readwrite');
-        const store = tx.objectStore(this.storeName);
-        const record = {
-          url,
-          data,
-          type,
-          expiresAt: Date.now() + ttlMs,
-          updatedAt: Date.now()
-        };
-        const req = store.put(record);
-        req.onsuccess = () => resolve();
-        req.onerror = () => reject(req.error);
-      });
-    } catch (e) {
-      void 0;
-    }
-  }
-
-  /**
-   * Retrieves data from the cache.
-   *
-   * @param {string} url - The URL key for the cached data.
-   * @returns {Promise<Object|null>} The cached record, or null if not found or expired.
-   */
-  async get(url) {
-    try {
-      const db = await this.dbPromise;
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(this.storeName, 'readonly');
-        const store = tx.objectStore(this.storeName);
-        const req = store.get(url);
-        req.onsuccess = () => {
-          const record = req.result;
-          if (!record) return resolve(null);
-          if (Date.now() > record.expiresAt) {
-            this.invalidate(url);
-            return resolve(null);
-          }
-          resolve(record);
-        };
-        req.onerror = () => reject(req.error);
-      });
-    } catch (e) {
-      void 0;
-      return null;
-    }
-  }
-
-  /**
-   * Invalidates a specific cache entry.
-   *
-   * @param {string} url - The URL key to invalidate.
-   * @returns {Promise<void>}
-   */
-  async invalidate(url) {
-    try {
-      const db = await this.dbPromise;
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(this.storeName, 'readwrite');
-        const store = tx.objectStore(this.storeName);
-        const req = store.delete(url);
-        req.onsuccess = () => resolve();
-        req.onerror = () => reject(req.error);
-      });
-    } catch (e) {
-      void 0;
-    }
-  }
-
-  /**
-   * Fetches data from a URL, utilizing the cache if available and not expired.
-   *
-   * @param {string} url - The URL to fetch.
-   * @param {Object} [options={}] - Fetch options (e.g., method, headers, signal).
-   * @param {number} [ttlMs=3600000] - Time to live in milliseconds for the cache.
-   * @param {string} [type='json'] - The expected response type ('json' or 'text').
-   * @returns {Promise<any>} The fetched or cached data.
-   */
-  async fetchWithCache(url, options = {}, ttlMs = 3600000, type = 'json') {
-    const cached = await this.get(url);
-    
-    const doFetch = async () => {
-      try {
-        const resp = await fetch(url, options);
-        if (!resp.ok) throw new Error('Network response was not ok');
-        const data = type === 'json' ? await resp.json() : await resp.text();
-        await this.set(url, data, type, ttlMs);
-        return data;
-      } catch (e) {
-        if (e.name === 'AbortError') throw e;
-        void 0;
-        if (cached) return cached.data;
-        throw e;
-      }
-    };
-
-    if (cached) {
-      const age = Date.now() - cached.updatedAt;
-      if (age > ttlMs / 2) {
-        doFetch().catch(e => {
-          if (e.name !== 'AbortError') void 0;
-        });
-      }
-      return cached.data;
-    }
-
-    return await doFetch();
-  }
-}
-
-const apiCache = new CacheManager();
 
 // ============================================
 // PARTIAL LOADER
@@ -210,34 +32,26 @@ function getPartialsBase() {
   return 'partials';
 }
 
-const PARTIALS_VERSION = 1;
-
-/**
- * Asynchronously loads a partial HTML file and injects it into a target element.
- *
- * @param {string} id - The ID of the target DOM element.
- * @param {string} url - The relative URL of the partial to load.
- * @returns {Promise<void>}
- */
 async function loadPartial(id, url) {
   const abortKey = `partial_${id}`;
   try {
-    const signal = apiAbort.getSignal(abortKey);
+    const signal = window.apiAbort ? window.apiAbort.getSignal(abortKey) : undefined;
     const base = getPartialsBase();
     const filename = url.replace(/^\/?partials\//, '');
-    const fetchUrl = base + '/' + filename;
-    const versionedUrl = fetchUrl + '?v=' + PARTIALS_VERSION;
+    const fetchUrl = base + '/' + filename + '?t=' + Date.now();
     
-    const html = await apiCache.fetchWithCache(versionedUrl, { signal }, 86400000, 'text');
+    const resp = await fetch(fetchUrl, { signal });
+    if (!resp.ok) throw new Error(`HTTP error! status: ${resp.status}`);
+    const html = await resp.text();
     
     document.getElementById(id).innerHTML = html;
-    handleActiveNav();
+    if (typeof handleActiveNav === 'function') handleActiveNav();
   } catch (e) {
     if (e.name !== 'AbortError') {
       void 0;
     }
   } finally {
-    apiAbort.clearSignal(abortKey);
+    if (window.apiAbort) window.apiAbort.clearSignal(abortKey);
   }
 }
 window.addEventListener("load", () => {
@@ -422,7 +236,7 @@ const chatbotResponses = {
 // USER PROGRESS STATE
 // ============================================
 // Use window.userProgress set by modules/userProgress.js (single source of truth)
-let userProgress = window.userProgress;
+userProgress = window.userProgress;
 
 // Spaced repetition intervals defined in data/revision-intervals.js
 // ============================================
@@ -463,11 +277,6 @@ let workspaceSocket = null;
   `;
   document.head.appendChild(style);
 }());
-// ============================================
-// NAVBAR
-// ============================================
-let scrollPosition = 0;
-let navbarInitialized = false;
 // ============================================
 // QUIZ MODAL
 // ============================================
@@ -519,16 +328,15 @@ let leaderboardRequestId = 0;
 const LEADERBOARD_LIMIT = 10;
 async function loadLeaderboard() {
   if (location.protocol === "file:") return { leaders: [], currentUserId: null };
-  const signal = apiAbort.getSignal('leaderboard');
+  const signal = window.apiAbort.getSignal('leaderboard');
   try {
-    // Cache leaderboard data for 5 minutes (300000 ms) with stale-while-revalidate
-    return await apiCache.fetchWithCache("/api/leaderboard", { credentials: "include", signal }, 300000, 'json');
+    return await window.apiCache.fetchWithCache("/api/leaderboard", { credentials: "include", signal }, 300000, 'json');
   } finally {
-    apiAbort.clearSignal('leaderboard');
+    window.apiAbort.clearSignal('leaderboard');
   }
 }
-let cachedSession = null;
-let progressSyncTimer = null;
+cachedSession = null;
+progressSyncTimer = null;
 async function syncUserProgress() {
   const session = await getAuthenticatedSession();
   if (!session?.authenticated) return;
@@ -794,8 +602,10 @@ const QUIZ_QUESTIONS = [
 ];
 let currentQuizIndex = 0;
 let quizSelections = [];
-if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', initializeQuizEditor);
-else initializeQuizEditor();
+if (typeof initializeQuizEditor === 'function') {
+  if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', initializeQuizEditor);
+  else initializeQuizEditor();
+}
 
 // ============================================
 // HASH CHANGE ROUTER
@@ -1256,60 +1066,7 @@ document.addEventListener('keydown', function(e) {
     setTimeout(setupProfileListeners, 200);
 })();
 
-// PWA Service Worker Registration & Lifecycle Management
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then((registration) => {
-        void 0;
-        
-        if (registration.waiting) {
-          showUpdateToast(registration.waiting);
-        }
-        
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              showUpdateToast(newWorker);
-            }
-          });
-        });
-      })
-      .catch((error) => {
-        void 0;
-      });
-      
-    navigator.serviceWorker.addEventListener('message', async (event) => {
-      if (event.data && event.data.type === 'PROCESS_OFFLINE_QUEUE') {
-        if (window.offlineStore && typeof window.offlineStore.syncQueue === 'function') {
-          void 0;
-          await window.offlineStore.syncQueue();
-        }
-      }
-    });
-    
-    if (navigator.storage && navigator.storage.estimate) {
-      navigator.storage.estimate().then(estimate => {
-        const usageMB = (estimate.usage / (1024 * 1024)).toFixed(2);
-        const quotaMB = (estimate.quota / (1024 * 1024)).toFixed(2);
-        const storageEl = document.getElementById('pwa-storage-usage');
-        if (storageEl) {
-          storageEl.textContent = `Offline Storage: ${usageMB} MB / ${quotaMB} MB`;
-        }
-      });
-    }
-  });
-}
-let refreshing = false;
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!refreshing) {
-      refreshing = true;
-      window.location.reload();
-    }
-  });
-}
+
 
 // Offline/Online status handler
 window.addEventListener('load', () => {
@@ -1656,13 +1413,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initActivityFeed();
 });
 
-// This file is loaded via a classic <script> tag (not a module), so it
-// cannot use `export`. Its top-level function declarations above
-// (getActivities, getRecentActivities, addActivity, clearActivities,
-// renderActivityFeed, trackProblemSolved, trackQuizCompleted,
-// trackBadgeEarned, trackStreakMilestone, trackLevelUp, trackXPEarned,
-// trackPractice, initActivityFeed) are already globally accessible.
-
 // In your quiz completion function
 function completeQuiz(topic, score) {
     // ... existing code ...
@@ -1748,8 +1498,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Apply filter from URL if any
     applyFilterFromURL();
     
-    // Initial render
-    filterProblems();
+    // Only render problems if the page has a problems container
+    if (document.querySelector('.problems-list')) {
+        filterProblems();
+    }
 });
 
 /**
@@ -1834,6 +1586,7 @@ function filterProblemsByDifficulty(difficulty, problems) {
  * Filter problems with search and difficulty
  */
 function filterProblems() {
+    if (!document.querySelector('.problems-list')) return;
     const selectedDifficulty = getSelectedDifficulty();
     const allProblems = getAllProblems();
     const searchTerm = currentSearch || '';
@@ -1871,11 +1624,15 @@ function renderProblemsWithPagination(filteredProblems) {
     const end = Math.min(start + PROBLEMS_PER_PAGE, totalProblems);
     const pageProblems = filteredProblems.slice(start, end);
     
-    // Render the problems
-    renderProblems(pageProblems);
+    // Render the problems (only if function exists on this page)
+    if (typeof renderProblems === 'function') {
+        renderProblems(pageProblems);
+    }
     
     // Update pagination
-    updatePaginationControls(currentPage, totalPages);
+    if (typeof updatePaginationControls === 'function') {
+        updatePaginationControls(currentPage, totalPages);
+    }
 }
 
 /**
