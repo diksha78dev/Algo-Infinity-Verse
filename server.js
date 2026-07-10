@@ -1,3 +1,6 @@
+import { startTelemetry } from "./backend/utils/telemetry.js";
+startTelemetry();
+
 import crypto from "crypto";
 import fs from "fs/promises";
 import http from "http";
