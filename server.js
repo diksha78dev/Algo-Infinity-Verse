@@ -1,3 +1,4 @@
+import { setupWebRTCSignaling } from "./backend/services/webrtc.service.js";
 import crypto from "crypto";
 import fs from "fs/promises";
 import http from "http";
@@ -3359,6 +3360,7 @@ function cleanupStudyUser(socket, roomId, userId) {
 }
 
 io.on("connection", (socket) => {
+setupWebRTCSignaling(socket);
 void 0;
 
 
