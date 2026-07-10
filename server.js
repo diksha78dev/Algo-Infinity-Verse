@@ -3581,8 +3581,52 @@ socket.on('battle-progress-update', (data) => {
   socket.to(`battle_${valid.battleId}`).emit('battle-progress-update', valid);
 });
 
-// ── END OF ADDITIONS ──
+// ── ESCAPE ROOM MODE ──
 
+socket.on('escape-join', (data) => {
+  const valid = validateSocketInput(data, {
+    roomId: { type: 'string', required: true },
+    userId: { type: 'string', required: true },
+    userName: { type: 'string', required: true }
+  });
+  if (!valid) return;
+  const roomName = `escape_${valid.roomId}`;
+  socket.join(roomName);
+  socket.escapeRoomId = valid.roomId;
+  socket.to(roomName).emit('escape-user-joined', { userId: valid.userId, userName: valid.userName });
+});
+
+socket.on('escape-code-update', (data) => {
+  const valid = validateSocketInput(data, {
+    roomId: { type: 'string', required: true },
+    code: { type: 'string', string: true }
+  });
+  if (!valid || socket.escapeRoomId !== valid.roomId) return;
+  socket.to(`escape_${valid.roomId}`).emit('escape-code-update', valid);
+});
+
+socket.on('escape-chat', (data) => {
+  const valid = validateSocketInput(data, {
+    roomId: { type: 'string', required: true },
+    userName: { type: 'string', required: true },
+    message: { type: 'string', string: true }
+  });
+  if (!valid || socket.escapeRoomId !== valid.roomId) return;
+  socket.to(`escape_${valid.roomId}`).emit('escape-chat', valid);
+});
+
+socket.on('escape-puzzle-solved', (data) => {
+  const valid = validateSocketInput(data, {
+    roomId: { type: 'string', required: true },
+    userId: { type: 'string', required: true },
+    userName: { type: 'string', required: true },
+    puzzleId: { type: 'string', required: true }
+  });
+  if (!valid || socket.escapeRoomId !== valid.roomId) return;
+  socket.to(`escape_${valid.roomId}`).emit('escape-puzzle-solved', valid);
+});
+
+// ── END OF ADDITIONS ──
 
   // ── COLLABORATIVE STUDY ROOM EVENTS ──
   socket.on("join-study-room", async ({ roomId, userId, userName }) => {

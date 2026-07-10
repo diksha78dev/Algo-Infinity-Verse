@@ -398,5 +398,37 @@
     "error": null,
     "createdAt": "2026-07-04T06:44:37.278Z",
     "variableSnapshots": []
+  },
+  {
+    "id": "9565d8ce-ffc7-4f6d-9cf0-b488c6e68ba3",
+    "userId": "guest-31d9b725-2d72-4a22-874e-bf041bba9942",
+    "sourceCode": "function twoSum(nums, target) {\n    console.log(\"How are ya\");\n}\n\nconst __TC__ = [{\"input\":[[2,7,11,15],9],\"expected\":[0,1]},{\"input\":[[3,2,4],6],\"expected\":[1,2]},{\"input\":[[3,3],6],\"expected\":[0,1]}];\nconst __RES__ = [];\nfor (let i = 0; i < __TC__.length; i++) {\n  const tc = __TC__[i];\n  try {\n    let result;\n    if (false) {\n      const instance = new twoSum(...tc.input);\n      if (tc.methods && Array.isArray(tc.methods)) {\n        result = instance;\n        for (const m of tc.methods) {\n          result = instance[m[0]](...m.slice(1));\n        }\n      } else {\n        result = instance;\n      }\n    } else {\n      result = twoSum(...tc.input);\n    }\n    const passed = false ? (tc.methods ? JSON.stringify(result) === JSON.stringify(tc.expected) : true) : JSON.stringify(result) === JSON.stringify(tc.expected);\n    __RES__.push({ index: i, ran: true, passed, actual: false ? (tc.methods ? result : \"instance\") : result, expected: tc.expected, input: tc.input, error: null });\n  } catch (e) {\n    __RES__.push({ index: i, ran: true, passed: false, actual: null, expected: tc.expected, input: tc.input, error: e.message });\n  }\n}\nconsole.log(\"__RESULT__:\" + JSON.stringify(__RES__));",
+    "originalCode": "function twoSum(nums, target) {\n    console.log(\"How are ya\");\n}",
+    "language": "javascript",
+    "stdin": "",
+    "stdout": "How are ya\nHow are ya\nHow are ya\n__RESULT__:[{\"index\":0,\"ran\":true,\"passed\":false,\"expected\":[0,1],\"input\":[[2,7,11,15],9],\"error\":null},{\"index\":1,\"ran\":true,\"passed\":false,\"expected\":[1,2],\"input\":[[3,2,4],6],\"error\":null},{\"index\":2,\"ran\":true,\"passed\":false,\"expected\":[0,1],\"input\":[[3,3],6],\"error\":null}]\n",
+    "stderr": "",
+    "exitCode": 0,
+    "cpuTime": "0.026",
+    "memory": 7828,
+    "error": null,
+    "createdAt": "2026-07-09T18:07:04.206Z",
+    "variableSnapshots": []
+  },
+  {
+    "id": "dd6b1227-455e-4730-8a92-52c86c44476e",
+    "userId": "guest-31d9b725-2d72-4a22-874e-bf041bba9942",
+    "sourceCode": "function twoSum(nums, target) {\n    console.log(\"How are ya\");\n}\n\nconst __TC__ = [{\"input\":[[2,7,11,15],9],\"expected\":[0,1]},{\"input\":[[3,2,4],6],\"expected\":[1,2]},{\"input\":[[3,3],6],\"expected\":[0,1]}];\nconst __RES__ = [];\nfor (let i = 0; i < __TC__.length; i++) {\n  const tc = __TC__[i];\n  try {\n    let result;\n    if (false) {\n      const instance = new twoSum(...tc.input);\n      if (tc.methods && Array.isArray(tc.methods)) {\n        result = instance;\n        for (const m of tc.methods) {\n          result = instance[m[0]](...m.slice(1));\n        }\n      } else {\n        result = instance;\n      }\n    } else {\n      result = twoSum(...tc.input);\n    }\n    const passed = false ? (tc.methods ? JSON.stringify(result) === JSON.stringify(tc.expected) : true) : JSON.stringify(result) === JSON.stringify(tc.expected);\n    __RES__.push({ index: i, ran: true, passed, actual: false ? (tc.methods ? result : \"instance\") : result, expected: tc.expected, input: tc.input, error: null });\n  } catch (e) {\n    __RES__.push({ index: i, ran: true, passed: false, actual: null, expected: tc.expected, input: tc.input, error: e.message });\n  }\n}\nconsole.log(\"__RESULT__:\" + JSON.stringify(__RES__));",
+    "originalCode": "function twoSum(nums, target) {\n    console.log(\"How are ya\");\n}",
+    "language": "javascript",
+    "stdin": "",
+    "stdout": "How are ya\nHow are ya\nHow are ya\n__RESULT__:[{\"index\":0,\"ran\":true,\"passed\":false,\"expected\":[0,1],\"input\":[[2,7,11,15],9],\"error\":null},{\"index\":1,\"ran\":true,\"passed\":false,\"expected\":[1,2],\"input\":[[3,2,4],6],\"error\":null},{\"index\":2,\"ran\":true,\"passed\":false,\"expected\":[0,1],\"input\":[[3,3],6],\"error\":null}]\n",
+    "stderr": "",
+    "exitCode": 0,
+    "cpuTime": "0.026",
+    "memory": 7836,
+    "error": null,
+    "createdAt": "2026-07-09T18:07:06.171Z",
+    "variableSnapshots": []
   }
 ]

@@ -357,7 +357,7 @@ function oaInit() {
     var rentInput = document.getElementById('oaRentCost');
     var buyInput = document.getElementById('oaBuyCost');
     oaState.ski.rentCost = Math.max(1, parseInt(rentInput.value) || 1);
-    oaState.ski.buyCost = Math.max(2, parseInt(buyInput.value) || 10);
+    oaState.ski.buyCost = Math.min(100, Math.max(2, parseInt(buyInput.value) || 10));
     oaSkiReset();
   });
 

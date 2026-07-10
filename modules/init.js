@@ -25,6 +25,7 @@ import { initEditor } from './editor.js';
 import { initMistakeDna } from './mistake-dna.js';
 import { initPersonalityQuiz } from './personality-quiz.js';
 
+
 function loadUserData() {
   if (typeof window.loadUserData === 'function') {
     return window.loadUserData();

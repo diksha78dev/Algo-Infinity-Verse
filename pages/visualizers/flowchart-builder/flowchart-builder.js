@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
         lastMousePos: { x: 0, y: 0 }
     };
 
+    // Shared drag state for block dragging (single set of window listeners, see initBlockDragging)
+    const blockDrag = { id: null, startMouseX: 0, startMouseY: 0, startBlockX: 0, startBlockY: 0 };
+
     const CANVAS_WIDTH = 10000;
     const CANVAS_HEIGHT = 10000;
     
@@ -40,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Initialization ---
     initDragAndDrop();
     initCanvasPanZoom();
+    initBlockDragging();
     initControls();
     centerCanvas();
     
@@ -172,39 +176,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 container.appendChild(cp);
             });
 
-            // Block dragging
-            let isDragging = false;
-            let startMouse = { x: 0, y: 0 };
-            let startPos = { x: 0, y: 0 };
-            
+            // Block dragging (actual move handled by the single shared listener pair
+            // set up once in initBlockDragging — see blockDrag state above)
             inner.addEventListener('mousedown', (e) => {
                 if (e.target.classList.contains('block-input')) return;
                 e.stopPropagation();
-                
+
                 selectBlock(block.id);
-                isDragging = true;
-                startMouse = { x: e.clientX, y: e.clientY };
-                startPos = { x: block.x, y: block.y };
-            });
-
-            window.addEventListener('mousemove', (e) => {
-                if (!isDragging) return;
-                const dx = (e.clientX - startMouse.x) / state.zoom;
-                const dy = (e.clientY - startMouse.y) / state.zoom;
-                
-                block.x = startPos.x + dx;
-                block.y = startPos.y + dy;
-                
-                container.style.left = `${block.x}px`;
-                container.style.top = `${block.y}px`;
-                renderConnections();
-            });
-
-            window.addEventListener('mouseup', () => {
-                isDragging = false;
+                blockDrag.id = block.id;
+                blockDrag.startMouseX = e.clientX;
+                blockDrag.startMouseY = e.clientY;
+                blockDrag.startBlockX = block.x;
+                blockDrag.startBlockY = block.y;
             });
 
             blocksLayer.appendChild(container);
+        });
+    }
+
+    // Single, permanent pair of window listeners driving whichever block is
+    // currently being dragged (identified via blockDrag.id), instead of a new
+    // pair being attached per-block on every renderBlocks() call.
+    function initBlockDragging() {
+        window.addEventListener('mousemove', (e) => {
+            if (!blockDrag.id) return;
+            const block = state.blocks[blockDrag.id];
+            if (!block) return;
+
+            const dx = (e.clientX - blockDrag.startMouseX) / state.zoom;
+            const dy = (e.clientY - blockDrag.startMouseY) / state.zoom;
+
+            block.x = blockDrag.startBlockX + dx;
+            block.y = blockDrag.startBlockY + dy;
+
+            const container = blocksLayer.querySelector(`.canvas-block-container[data-id="${blockDrag.id}"]`);
+            if (container) {
+                container.style.left = `${block.x}px`;
+                container.style.top = `${block.y}px`;
+            }
+            renderConnections();
+        });
+
+        window.addEventListener('mouseup', () => {
+            blockDrag.id = null;
         });
     }
 
@@ -534,8 +548,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // 1. Check if Start and End exist
-        if (startBlocks === 0) {
-            showMessage('Warning: Missing Start block.', 'error');
+        const missingBlocks = [];
+        if (startBlocks === 0) missingBlocks.push('Start');
+        if (endBlocks === 0) missingBlocks.push('End');
+        if (missingBlocks.length > 0) {
+            const label = missingBlocks.join(' and ') + (missingBlocks.length > 1 ? ' blocks' : ' block');
+            showMessage(`Warning: Missing ${label}.`, 'error');
             isValid = false;
         }
 
@@ -550,7 +568,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (!isValid) {
-            if (startBlocks > 0) showMessage('Validation failed: Some blocks are unreachable.', 'error');
+            if (missingBlocks.length === 0) showMessage('Validation failed: Some blocks are unreachable.', 'error');
         } else {
             showMessage('Validation passed! Structure looks good.', 'success');
         }

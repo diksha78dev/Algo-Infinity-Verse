@@ -742,17 +742,19 @@
 </head>
 
 <body data-page="index">
+  <!-- PWA Storage Usage -->
+  <div id="pwa-storage-usage"
+    style="position: fixed; bottom: 10px; left: 30px; background: rgba(16, 23, 42, 0.8); border: 1px solid var(--primary); padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; color: #cbd5e1; z-index: 9999; backdrop-filter: blur(5px);">
+    Checking storage...
+  </div>
+
   <!-- Offline Status Banner -->
   <div id="offline-banner" class="offline-banner hidden" aria-live="polite">
     <i class="fas fa-wifi-slash"></i> You are currently offline. Some features may be limited, but cached content is
     available.
   </div>
 
-  <!-- PWA Storage Usage -->
-  <div id="pwa-storage-usage"
-    style="position: fixed; bottom: 10px; left: 30px; background: rgba(16, 23, 42, 0.8); border: 1px solid var(--primary); padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; color: #cbd5e1; z-index: 9999; backdrop-filter: blur(5px);">
-    Checking storage...
-  </div>
+  
 
   <!-- Loading Screen -->
   <div id="loading-screen">
