@@ -548,8 +548,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // 1. Check if Start and End exist
-        if (startBlocks === 0) {
-            showMessage('Warning: Missing Start block.', 'error');
+        const missingBlocks = [];
+        if (startBlocks === 0) missingBlocks.push('Start');
+        if (endBlocks === 0) missingBlocks.push('End');
+        if (missingBlocks.length > 0) {
+            const label = missingBlocks.join(' and ') + (missingBlocks.length > 1 ? ' blocks' : ' block');
+            showMessage(`Warning: Missing ${label}.`, 'error');
             isValid = false;
         }
 
@@ -564,7 +568,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (!isValid) {
-            if (startBlocks > 0) showMessage('Validation failed: Some blocks are unreachable.', 'error');
+            if (missingBlocks.length === 0) showMessage('Validation failed: Some blocks are unreachable.', 'error');
         } else {
             showMessage('Validation passed! Structure looks good.', 'success');
         }
