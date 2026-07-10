@@ -61,6 +61,18 @@ Users can:
 
 ----
 
+#### Smart Revision Calendar (New Feature)
+
+An interactive DSA study scheduling engine driven by spaced repetition algorithms to aid structured review:
+- **Automatic Scheduling**: Calculates target review check-points at optimized intervals (Day 1, 3, 7, 14, 30).
+- **Personalized Prioritization**: Weights topics based on topic difficulty and historical quiz scores. Low accuracy resets schedule to Day 1, while high scores extend intervals.
+- **Revision Dashboard**: Track memory retention estimates, streaks, average quiz improvements, and weekly completion rates.
+- **Interactive Calendar**: View past, current, and upcoming task grids. Color-coded markers distinguish completed, due, and overdue tasks.
+- **Reschedule & Recall Tools**: Postpone tasks easily or rate concept recall quality to adapt intervals dynamically.
+- **Multi-user Sync**: Automatically registers schedules in localStorage for guest sessions and syncs to Firebase Firestore for authenticated accounts.
+
+----
+
 ### Quiz System
 
 **60 Topic-Specific Questions** (10 per topic covering key concepts)

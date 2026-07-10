@@ -164,18 +164,23 @@ function getCompletedTopics() {
   });
 }
 
+/**
+ * Get an array of topic objects that the user has fully completed (progress >= 100%).
+ * Utilizes existing getUserProgress and the global dsaTopics array.
+ */
+function getCompletedTopics() {
+    const progress = getUserProgress();
+    const all = window.dsaTopics || [];
+    return all.filter(topic => (progress[topic.id] || 0) >= 100);
+}
+
 // Export functions
 export { 
-  getTopicProgress, 
-  getUserProgress,
-  saveUserProgress,
-  getCompletedTopics,
-  initTopicOfTheDay,
-  initTopicsSection,
-  getDailyTopic,
-  getDifficultyClass,
-  getQuizTopicKey,
-  openTopicModal,
-  closeTopicModal,
-  selectSampleProblem
+    renderTopicCards, 
+    updateTopicProgress, 
+    getTopicProgress, 
+    isTopicCompleted,
+    getUserProgress,
+    saveUserProgress,
+    getCompletedTopics
 };

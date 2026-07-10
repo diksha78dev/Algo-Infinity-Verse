@@ -2380,6 +2380,82 @@ if (pathname === "/api/forgot-password" && req.method === "POST") {
     }
   }
 
+  // ── Smart Revision endpoints ──────────────────────────────────────────────
+  if (pathname === "/api/revision" && req.method === "GET") {
+    const session = getSession(req);
+    if (!session) return sendJson(res, 401, { error: "Login required." });
+
+    try {
+      if (useFirestore) {
+        const doc = await db.collection("users").doc(session.sub).get();
+        if (!doc.exists) return sendJson(res, 404, { error: "User not found." });
+        const userData = doc.data();
+        return sendJson(res, 200, {
+          success: true,
+          revisionSchedule: userData.revisionSchedule || {},
+          revisionCalendar: userData.revisionCalendar || {
+            tasks: [],
+            history: [],
+            streak: 0,
+            longestStreak: 0,
+            missedDays: 0,
+            stats: {}
+          }
+        });
+      } else {
+        const users = await readUsers();
+        const user = users.find(u => u.id === session.sub);
+        if (!user) return sendJson(res, 404, { error: "User not found." });
+        return sendJson(res, 200, {
+          success: true,
+          revisionSchedule: user.revisionSchedule || {},
+          revisionCalendar: user.revisionCalendar || {
+            tasks: [],
+            history: [],
+            streak: 0,
+            longestStreak: 0,
+            missedDays: 0,
+            stats: {}
+          }
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching revision data:", err);
+      return sendJson(res, 500, { error: "Failed to fetch revision data." });
+    }
+  }
+
+  if (pathname === "/api/revision" && (req.method === "PUT" || req.method === "POST")) {
+    const session = getSession(req);
+    if (!session) return sendJson(res, 401, { error: "Login required." });
+
+    let payload;
+    try { payload = await readJsonBody(req); } catch { return sendJson(res, 400, { error: "Invalid JSON." }); }
+
+    const { revisionSchedule, revisionCalendar } = payload;
+    const updates = {};
+    if (revisionSchedule) updates.revisionSchedule = revisionSchedule;
+    if (revisionCalendar) updates.revisionCalendar = revisionCalendar;
+
+    try {
+      if (useFirestore) {
+        await db.collection("users").doc(session.sub).update(updates);
+      } else {
+        const users = await readUsers();
+        const idx = users.findIndex(u => u.id === session.sub);
+        if (idx !== -1) {
+          if (revisionSchedule) users[idx].revisionSchedule = revisionSchedule;
+          if (revisionCalendar) users[idx].revisionCalendar = revisionCalendar;
+          await writeUsers(users);
+        }
+      }
+      return sendJson(res, 200, { success: true });
+    } catch (err) {
+      console.error("Error updating revision data:", err);
+      return sendJson(res, 500, { error: "Failed to update revision data." });
+    }
+  }
+
   // ── Collaborative Study Rooms endpoints ──────────────────────────────────
   if (pathname === "/api/study-rooms" && req.method === "GET") {
     const roomsList = [];
