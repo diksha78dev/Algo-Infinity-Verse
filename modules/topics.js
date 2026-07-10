@@ -156,26 +156,18 @@ function saveUserProgress() {
 
 function getCompletedTopics() {
   const dsaTopics = window.dsaTopics || [];
-  const userProgress = getUserProgress();
-  const categoryMap = { Arrays: "arrays", Strings: "strings", "Linked List": "linkedlist", Trees: "trees", Graphs: "graphs", "Dynamic Programming": "dp" };
   return dsaTopics.filter(topic => {
-    const category = categoryMap[topic.name];
-    return category && userProgress.completedTopics && userProgress.completedTopics.includes(category);
+    const progress = getTopicProgress(topic.name);
+    return progress.percentage >= 100;
   });
 }
 
 // Export functions
 export { 
-  getTopicProgress, 
-  getUserProgress,
-  saveUserProgress,
-  getCompletedTopics,
-  initTopicOfTheDay,
-  initTopicsSection,
-  getDailyTopic,
-  getDifficultyClass,
-  getQuizTopicKey,
-  openTopicModal,
-  closeTopicModal,
-  selectSampleProblem
+    getTopicProgress, 
+    getUserProgress,
+    saveUserProgress,
+    getCompletedTopics,
+    initTopicOfTheDay,
+    initTopicsSection
 };

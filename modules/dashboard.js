@@ -1,3 +1,5 @@
+import { renderBookmarkCollectionsPanel } from './bookmarkUI.js';
+
 let leaderboardRequestId = 0;
 const LEADERBOARD_LIMIT = 10;
 let currentLeaderboardPage = 1;
@@ -33,6 +35,7 @@ function updateDashboard() {
     updateRecentProblems();
     updateRecommendations();
     updateLeaderboard();
+    renderBookmarkCollectionsPanel();
     updateReviewQueueWidget();
     
     const grid = document.querySelector(".dashboard-grid");

@@ -60,6 +60,8 @@ const visualizers = [
   { name: "Cache Replacement Arena", path: "/pages/visualizers/cache-replacement-arena/cache-replacement-arena.html", category: "Systems & OS", icon: "fa-bolt", desc: "Compare LRU, LFU, FIFO, and other cache replacement policies." },
   { name: "GC Visualizer", path: "/pages/visualizers/gc-visualizer/gc-visualizer.html", category: "Systems & OS", icon: "fa-trash-can", desc: "Visualize garbage collection algorithms: mark-sweep, copy, and compact." },
   { name: "Garbage Collector Simulator", path: "/pages/visualizers/gc-simulator/gc-simulator.html", category: "Systems & OS", icon: "fa-broom", desc: "Interactive GC simulator with generational collection strategies." },
+  { name: "QUIC & HTTP/3 Simulator", path: "/pages/visualizers/quic-simulator/quic-simulator.html", category: "Systems & OS", icon: "fa-network-wired", desc: "Interactive simulator comparing TCP/TLS handshakes against QUIC's 0-RTT." },
+  { name: "Kubernetes Pod Scheduler", path: "/pages/visualizers/kube-scheduler/kube-scheduler.html", category: "Systems & OS", icon: "fa-dharmachakra", desc: "Visualize Kube-Scheduler filtering, scoring, and bin-packing algorithms." },
   { name: "V8 GC Visualizer", path: "/pages/visualizers/v8-gc/v8-gc.html", category: "Systems & OS", icon: "fa-gear", desc: "Visualize V8 JavaScript engine's garbage collection phases." },
   { name: "Malloc Visualizer", path: "/pages/visualizer/malloc-visualizer/malloc-visualizer.html", category: "Systems & OS", icon: "fa-puzzle-piece", desc: "Visualize dynamic memory allocation with malloc and free." },
   { name: "SSD Simulator", path: "/pages/visualizers/ssd-simulator/ssd-simulator.html", category: "Systems & OS", icon: "fa-hard-drive", desc: "Simulate SSD wear leveling, garbage collection, and FTL mapping." },
@@ -67,6 +69,7 @@ const visualizers = [
   { name: "Concurrency Simulator", path: "/pages/visualizers/concurrency-simulator/concurrency-simulator.html", category: "Systems & OS", icon: "fa-layer-group", desc: "Simulate threads, locks, semaphores, and race conditions." },
   { name: "Lock-Free Playground", path: "/pages/visualizers/lock-free-playground/lock-free-playground.html", category: "Systems & OS", icon: "fa-atom", desc: "Explore lock-free data structures with CAS operations visualized." },
   { name: "TCP Visualizer", path: "/pages/visualizers/tcp-visualizer/tcp-visualizer.html", category: "Systems & OS", icon: "fa-envelope", desc: "Visualize TCP handshake, congestion control, and flow control." },
+  { name: "QUIC & HTTP/3 Simulator", path: "/pages/visualizers/quic-simulator/quic-simulator.html", category: "Systems & OS", icon: "fa-network-wired", desc: "Interactive simulator comparing TCP/TLS handshakes against QUIC's 0-RTT." },
   { name: "Git Visualizer", path: "/pages/ai-features/git-visualizer/git-visualizer.html", category: "Systems & OS", icon: "fa-code-branch", desc: "Visualize Git internals: commits, branches, merges, and the DAG commit graph." },
 
   // ── CPU Scheduling ──
@@ -83,6 +86,7 @@ const visualizers = [
   { name: "PBFT Simulator", path: "/pages/visualizers/pbft-simulator/pbft-simulator.html", category: "Distributed Systems", icon: "fa-shield-halved", desc: "Practical Byzantine Fault Tolerance consensus visualized." },
   { name: "Consistent Hashing Visualizer", path: "/pages/visualizers/consistent-hashing-visualizer/consistent-hashing-visualizer.html", category: "Distributed Systems", icon: "fa-bullseye", desc: "Distribute keys across nodes with consistent hashing ring." },
   { name: "Kafka Simulator", path: "/pages/visualizers/kafka-simulator/kafka-simulator.html", category: "Distributed Systems", icon: "fa-envelope", desc: "Simulate Apache Kafka topics, partitions, and consumer groups." },
+  { name: "BitTorrent Swarm Simulator", path: "/pages/visualizers/bittorrent-simulator/bittorrent-simulator.html", category: "Distributed Systems", icon: "fa-project-diagram", desc: "Simulate a P2P swarm with Rarest-First piece selection and Tit-for-Tat choking." },
   { name: "Redlock Simulator", path: "/pages/visualizers/redlock-simulator/redlock-simulator.html", category: "Distributed Systems", icon: "fa-lock", desc: "Redis-based distributed lock algorithm simulation." },
   { name: "Epidemic Protocol Simulator", path: "/pages/visualizers/epidemic-protocol-simulator/epidemic-protocol-simulator.html", category: "Distributed Systems", icon: "fa-share-nodes", desc: "Gossip-based epidemic broadcasting and failure detection." },
   { name: "MapReduce Simulator", path: "/pages/visualizers/map-reduce-simulator/map-reduce-simulator.html", category: "Distributed Systems", icon: "fa-map", desc: "Visualize Map and Reduce phases in distributed data processing." },
