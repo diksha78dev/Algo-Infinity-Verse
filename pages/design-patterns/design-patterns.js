@@ -90,9 +90,9 @@ function renderPatterns(filter = 'all') {
             </div>
             <span class="inline-block px-2 py-1 text-xs font-semibold rounded mb-3 w-max capitalize ${categoryColor}">${pattern.category}</span>
             <p class="text-sm opacity-80 flex-1">${pattern.desc}</p>
-            <button class="mt-4 text-indigo-500 font-medium hover:text-indigo-700 text-left transition-colors flex items-center gap-1 group">
+            <a href="/pages/design-patterns/${pattern.id}.html" class="mt-4 text-indigo-500 font-medium hover:text-indigo-700 text-left transition-colors flex items-center gap-1 group">
                 Learn more <i class="fas fa-arrow-right text-xs transform group-hover:translate-x-1 transition-transform"></i>
-            </button>
+            </a>
         `;
     grid.appendChild(card);
   });
