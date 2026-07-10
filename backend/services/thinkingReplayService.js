@@ -2,6 +2,11 @@ const OpenAI = require('openai');
 
 class ThinkingReplayService {
   constructor() {
+    if (!process.env.OPENAI_API_KEY) {
+      console.error('OPENAI_API_KEY is missing from environment variables.');
+      throw new Error('OPENAI_API_KEY is required. Please set it in .env file.');
+    }
+
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY
     });
@@ -9,13 +14,8 @@ class ThinkingReplayService {
 
   async generateReplay(snapshots, events, submissions) {
     try {
-      // 1. Prepare data for AI
       const analysisData = this.prepareAnalysisData(snapshots, events, submissions);
-      
-      // 2. Generate prompt for AI
       const prompt = this.buildPrompt(analysisData);
-      
-      // 3. Call LLM
       const response = await this.openai.chat.completions.create({
         model: "gpt-4-turbo-preview",
         messages: [
@@ -26,9 +26,7 @@ class ThinkingReplayService {
         max_tokens: 2000
       });
 
-      // 4. Parse response
       const replay = this.parseResponse(response.choices[0].message.content);
-      
       return replay;
     } catch (error) {
       console.error('AI Replay generation failed:', error);

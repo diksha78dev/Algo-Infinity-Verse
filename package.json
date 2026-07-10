@@ -27,6 +27,7 @@
     "@opentelemetry/instrumentation-express": "^0.68.0",
     "@opentelemetry/instrumentation-http": "^0.220.0",
     "@opentelemetry/sdk-node": "^0.220.0",
+    "better-sqlite3": "^12.11.1",
     "bullmq": "^5.79.1",
     "cors": "^2.8.6",
     "csv-parse": "^7.0.0",

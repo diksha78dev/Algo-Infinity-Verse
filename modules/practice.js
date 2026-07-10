@@ -5,6 +5,8 @@ let virtualizedGrid = null;
 let lastFilteredCacheKey = "";
 let lastFilteredProblems = [];
 import { VirtualizedGrid } from './virtualizedGrid.js';
+import { initBookmarkCollections, renderCollectionChooser } from './bookmarkUI.js';
+import { ensureBookmarkCollectionsState, addProblemToCollections, removeProblemFromCollections, getCollectionsForProblem } from './bookmarkCollections.js';
 
 function loadUserData() {
   if (typeof window.loadUserData === 'function') window.loadUserData();
@@ -105,7 +107,9 @@ function initPracticeSection() {
     paginationControls.style.display = 'none';
   }
 
+  ensureBookmarkCollectionsState(userProgress);
   renderProblems();
+  initBookmarkCollections();
   
   if (restoredScrollY > 0) {
     // Delay scroll slightly to ensure DOM is ready and grid layout updated
@@ -203,11 +207,12 @@ function renderProblemCardHtml(problem) {
   const isCompleted = userProgress.completedProblems.includes(problem.id);
   const isFavorite = userProgress.favoriteProblems.includes(problem.id);
   const hasNotes = userProgress.problemNotes && userProgress.problemNotes[problem.id];
+  const collectionChooser = renderCollectionChooser(problem.id);
 
   const displayTitle = problem.highlightedTitle || problem.title;
   const snippetHtml = problem.highlightedDescription ? `<div class="problem-snippet" style="font-size: 0.85em; color: var(--text-secondary); margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${problem.highlightedDescription}</div>` : "";
 
-  return `<div class="problem-card animate-in" data-id="${problem.id}"><div class="problem-header"><h3 class="problem-title">${recBadge}${displayTitle}</h3><div class="problem-actions"><button class="favorite-btn ${isFavorite ? 'active' : ''}" data-id="${problem.id}" aria-label="Favorite problem"><i class="fas fa-heart"></i></button><button class="notes-btn ${hasNotes ? 'has-notes' : ''}" data-id="${problem.id}" aria-label="Problem notes"><i class="fas fa-sticky-note"></i></button><span class="difficulty-badge ${problem.difficulty}">${problem.difficulty}</span></div></div>${snippetHtml}<div class="problem-tags">${problem.tags.map(tag => `<span class="tag">${tag}</span>`).join("")}</div><div class="problem-meta"><span class="acceptance-rate"><i class="fas fa-users"></i> ${problem.acceptance} acceptance</span>${isCompleted ? '<span class="completed-badge"><i class="fas fa-check"></i> Completed</span>' : ''}</div></div>`;
+  return `<div class="problem-card animate-in" data-id="${problem.id}"><div class="problem-header"><h3 class="problem-title">${recBadge}${displayTitle}</h3><div class="problem-actions"><button class="favorite-btn ${isFavorite ? 'active' : ''}" data-id="${problem.id}" aria-label="Favorite problem"><i class="fas fa-heart"></i></button><button class="notes-btn ${hasNotes ? 'has-notes' : ''}" data-id="${problem.id}" aria-label="Problem notes"><i class="fas fa-sticky-note"></i></button><span class="difficulty-badge ${problem.difficulty}">${problem.difficulty}</span></div></div>${snippetHtml}<div class="problem-tags">${problem.tags.map(tag => `<span class="tag">${tag}</span>`).join("")}</div><div class="problem-meta"><span class="acceptance-rate"><i class="fas fa-users"></i> ${problem.acceptance} acceptance</span>${isCompleted ? '<span class="completed-badge"><i class="fas fa-check"></i> Completed</span>' : ''}</div>${collectionChooser}</div>`;
 }
 
 function attachProblemGridEventDelegation(grid) {
@@ -267,8 +272,15 @@ function addProblemCardEventListeners(grid) {
 function toggleFavorite(problemId) {
   const userProgress = window.userProgress || {};
   const idx = userProgress.favoriteProblems.indexOf(problemId);
-  if (idx > -1) { userProgress.favoriteProblems.splice(idx, 1); if (typeof showNotification === 'function') showNotification("Removed from favorites 💔", "info"); }
-  else { userProgress.favoriteProblems.push(problemId); if (typeof showNotification === 'function') showNotification("Added to favorites ❤️", "success"); }
+  if (idx > -1) {
+    userProgress.favoriteProblems.splice(idx, 1);
+    removeProblemFromCollections(userProgress, problemId, getCollectionsForProblem(userProgress, problemId));
+    if (typeof showNotification === 'function') showNotification("Removed from favorites 💔", "info");
+  } else {
+    userProgress.favoriteProblems.push(problemId);
+    addProblemToCollections(userProgress, problemId, []);
+    if (typeof showNotification === 'function') showNotification("Added to favorites ❤️", "success");
+  }
   if (typeof saveUserData === 'function') saveUserData();
 }
 

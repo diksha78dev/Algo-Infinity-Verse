@@ -8,6 +8,7 @@ import {
 import { getClientIdentifier, isLoginRateLimited, LOGIN_WINDOW_MS } from "../services/auth.service.js";
 import { applyRateLimit, signupLimiter, loginLimiter } from "../utils/rateLimiter.js";
 import { initializeFirebase, COLLECTIONS } from "../../firebase.js";
+import { validateAndNormalizeEmail } from "../utils/emailValidation.js";
 
 function validateSignup({ name, email, password, confirmPassword }) {
   const cleanName = String(name || "").trim();
@@ -15,16 +16,21 @@ function validateSignup({ name, email, password, confirmPassword }) {
   const rawPassword = String(password || "");
   const rawConfirm = String(confirmPassword || "");
 
-  if (cleanName.length < 2) return "Name must be at least 2 characters.";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-    return "Enter a valid email address.";
+  if (cleanName.length < 2) return { isValid: false, error: "Name must be at least 2 characters." };
+
+  const emailValidation = validateAndNormalizeEmail(email);
+  if (!emailValidation.valid) {
+    return { isValid: false, error: emailValidation.error };
   }
-  if (rawPassword.length < 8) return "Password must be at least 8 characters.";
+
+  if (rawPassword.length < 8) return { isValid: false, error: "Password must be at least 8 characters." };
   if (!/[a-z]/.test(rawPassword) || !/[A-Z]/.test(rawPassword) || !/\d/.test(rawPassword)) {
-    return "Password must include uppercase, lowercase, and a number.";
+    return { isValid: false, error: "Password must include uppercase, lowercase, and a number." };
   }
-  if (rawPassword !== rawConfirm) return "Passwords do not match.";
-  return null;
+  if (rawPassword !== rawConfirm) return { isValid: false, error: "Passwords do not match." };
+
+  return { isValid: true, normalizedEmail: emailValidation.normalizedEmail, error: null };
+
 }
 
 export async function handleGuestLogin(req, res) {
@@ -53,14 +59,14 @@ export async function handleSignup(req, res) {
   }
 
   const payload = await readJsonBody(req);
-  const validationError = validateSignup(payload);
-  if (validationError) return sendJson(res, 400, { error: validationError });
+  const validationResult = validateSignup(payload);
+  if (!validationResult.isValid) return sendJson(res, 400, { error: validationResult.error });
 
   const db = initializeFirebase();
   const useFirestore = !!db;
 
-  const email = String(payload.email).trim().toLowerCase();
-  const existing = await getUserByEmail(email, useFirestore, db);
+  const email = validationResult.normalizedEmail; 
+   const existing = await getUserByEmail(email, useFirestore, db);
 
   if (existing) {
     await normalizeAuthDelay();

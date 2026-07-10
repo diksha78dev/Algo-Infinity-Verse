@@ -24,6 +24,7 @@ import { initHashRouter } from './hash-router.js';
 import { initEditor } from './editor.js';
 import { initMistakeDna } from './mistake-dna.js';
 import { initPersonalityQuiz } from './personality-quiz.js';
+import { initBookmarkCollections, renderBookmarkCollectionsPanel } from './bookmarkUI.js';
 
 
 function loadUserData() {
@@ -67,6 +68,7 @@ function initializeApp() {
   initDailyChallenge();
   initChatbot();
   initProfile();
+  initBookmarkCollections();
   initAiInterviewer();
   initNewsletterValidation();
   initScrollEffects();
