@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SHA-256 Hashing Visualizer | Algo Infinity Verse</title>
+    <meta
+      name="description"
+      content="Step-by-step interactive visualizer for the SHA-256 cryptographic hashing algorithm."
+    />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <!-- External Stylesheets -->
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="sha256-visualizer.css" />
+  </head>
+  <body class="sha-body">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <i class="fas fa-infinity"></i>
+        <span>Algo Infinity Verse</span>
+      </div>
+      <ul class="nav-links">
+        <li>
+          <a href="/index.html"><i class="fas fa-home"></i> <span>Home</span></a>
+        </li>
+        <li>
+          <a href="/pages/visualizers/visualizers.html"
+            ><i class="fas fa-project-diagram"></i> <span>Visualizers</span></a
+          >
+        </li>
+        <li class="active">
+          <a href="#"><i class="fas fa-lock"></i> <span>SHA-256</span></a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="main-content">
+      <header class="app-header">
+        <div class="header-title">
+          <h1><i class="fas fa-shield-alt"></i> SHA-256 Hashing Visualizer</h1>
+          <p>Understand the mathematical transformation of secure hashing step-by-step</p>
+        </div>
+        <div class="controls-card glassy">
+          <div class="input-group">
+            <label for="messageInput">Message String</label>
+            <input type="text" id="messageInput" placeholder="Enter message..." value="abc" />
+          </div>
+          <div class="btn-group">
+            <button id="btnReset" class="btn btn-secondary">
+              <i class="fas fa-undo"></i> Reset
+            </button>
+            <button id="btnStep" class="btn btn-primary">
+              <i class="fas fa-step-forward"></i> Step Forward
+            </button>
+            <button id="btnFastForward" class="btn btn-accent">
+              <i class="fas fa-forward"></i> Fast Forward
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main class="dashboard-grid">
+        <!-- Phase 1: Pre-processing (Padding) -->
+        <section class="panel glassy phase-panel" id="panel-padding">
+          <div class="panel-header">
+            <h2><i class="fas fa-align-left"></i> 1. Message Padding</h2>
+            <span class="status-badge" id="status-padding">Pending</span>
+          </div>
+          <div class="panel-body">
+            <p class="info-text">
+              SHA-256 processes messages in 512-bit blocks. The message is padded with a '1',
+              followed by '0's, and ends with a 64-bit length of the original message.
+            </p>
+            <div class="hex-grid" id="padding-grid">
+              <!-- Hex bytes injected via JS -->
+              <div class="empty-state">Waiting for input...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Phase 2: Message Schedule -->
+        <section class="panel glassy phase-panel" id="panel-schedule">
+          <div class="panel-header">
+            <h2><i class="fas fa-calendar-alt"></i> 2. Message Schedule (W0 - W63)</h2>
+            <span class="status-badge" id="status-schedule">Pending</span>
+          </div>
+          <div class="panel-body">
+            <p class="info-text">
+              The 512-bit block is expanded into 64 words (32 bits each). W0-W15 come from the
+              block. W16-W63 are generated via logical rotations.
+            </p>
+            <div class="schedule-grid" id="schedule-grid">
+              <!-- W words injected via JS -->
+              <div class="empty-state">Pending schedule expansion...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Phase 3: Compression Loop -->
+        <section class="panel glassy phase-panel compression-panel" id="panel-compression">
+          <div class="panel-header">
+            <h2>
+              <i class="fas fa-sync-alt"></i> 3. Compression Loop (Round
+              <span id="roundCounter">0</span>/64)
+            </h2>
+            <span class="status-badge" id="status-compression">Pending</span>
+          </div>
+          <div class="panel-body compression-layout">
+            <!-- Left: Current Registers -->
+            <div class="registers-box current-registers">
+              <h3>Working Variables</h3>
+              <div class="register" id="reg-a">
+                <span class="reg-label">A</span><span class="reg-val">00000000</span>
+              </div>
+              <div class="register" id="reg-b">
+                <span class="reg-label">B</span><span class="reg-val">00000000</span>
+              </div>
+              <div class="register" id="reg-c">
+                <span class="reg-label">C</span><span class="reg-val">00000000</span>
+              </div>
+              <div class="register" id="reg-d">
+                <span class="reg-label">D</span><span class="reg-val">00000000</span>
+              </div>
+              <div class="register" id="reg-e">
+                <span class="reg-label">E</span><span class="reg-val">00000000</span>
+              </div>
+              <div class="register" id="reg-f">
+                <span class="reg-label">F</span><span class="reg-val">00000000</span>
+              </div>
+              <div class="register" id="reg-g">
+                <span class="reg-label">G</span><span class="reg-val">00000000</span>
+              </div>
+              <div class="register" id="reg-h">
+                <span class="reg-label">H</span><span class="reg-val">00000000</span>
+              </div>
+            </div>
+
+            <!-- Middle: Logic / Operations -->
+            <div class="operations-box">
+              <div class="op-math">
+                <div class="op-line">T1 = H + Σ1(E) + Ch(E,F,G) + K + W</div>
+                <div class="op-line">T2 = Σ0(A) + Maj(A,B,C)</div>
+                <div class="op-line">A = T1 + T2</div>
+                <div class="op-line">E = D + T1</div>
+              </div>
+              <div class="op-vars">
+                <div class="var-box"><strong>K[i]:</strong> <span id="val-k">00000000</span></div>
+                <div class="var-box"><strong>W[i]:</strong> <span id="val-w">00000000</span></div>
+                <div class="var-box highlight-t1">
+                  <strong>T1:</strong> <span id="val-t1">00000000</span>
+                </div>
+                <div class="var-box highlight-t2">
+                  <strong>T2:</strong> <span id="val-t2">00000000</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Phase 4: Final Output -->
+        <section class="panel glassy phase-panel final-panel" id="panel-final">
+          <div class="panel-header">
+            <h2><i class="fas fa-check-circle"></i> Final SHA-256 Hash</h2>
+          </div>
+          <div class="panel-body">
+            <p class="info-text">
+              The intermediate hash values (H0-H7) are added to the working variables (A-H). Then
+              they are concatenated to form the 256-bit hash.
+            </p>
+            <div class="final-hash-container">
+              <div class="final-hash" id="finalHashOutput">Waiting for computation...</div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="sha256-visualizer.js"></script>
+  </body>
+</html>
