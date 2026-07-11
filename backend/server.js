@@ -15,6 +15,7 @@ import { getSession, clearSessionCookie } from "./utils/sessionToken.js";
 import { commonPasswords } from "./config/passwordBlacklist.js";
 import { validateAndNormalizeEmail } from "./utils/emailValidation.js";
 import securityConfig from "./config/security.js";
+import { getClientIdentifier } from "./utils/clientIdentifier.js";
 
 const MAX_RESUME_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
@@ -76,26 +77,6 @@ const TRUSTED_PROXIES = new Set(
     .map((s) => s.trim())
     .filter(Boolean),
 );
-
-function getClientIdentifier(req) {
-  const remoteAddress = req.socket?.remoteAddress || "unknown";
-
-  // Only honour X-Forwarded-For when the immediate TCP caller is a
-  // known trusted proxy — otherwise an attacker can supply any value
-  // they like and trivially bypass rate limiting.
-  if (
-    remoteAddress !== "unknown" &&
-    TRUSTED_PROXIES.has(remoteAddress) &&
-    req.headers["x-forwarded-for"]
-  ) {
-    // The left-most entry is the original client IP added by the
-    // first proxy in the chain; everything to the right can be spoofed.
-    const leftmost = req.headers["x-forwarded-for"].split(",")[0].trim();
-    if (leftmost) return leftmost;
-  }
-
-  return remoteAddress;
-}
 
 function isSignupRateLimited(identifier) {
   const now = Date.now();
