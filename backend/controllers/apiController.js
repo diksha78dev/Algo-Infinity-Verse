@@ -284,6 +284,7 @@ export async function executeTracedCode(req, res) {
               if (snapshots.length === 0) {
                 reject(new Error(stderr || err.message));
               } else {
+                traceError = stderr || err.message;
                 resolve();
               }
             } else {
