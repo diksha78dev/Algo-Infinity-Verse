@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>K-Means Clustering Visualizer | Algo Infinity Verse</title>
+    <meta
+      name="description"
+      content="Interactive 2D visualization of the K-Means Clustering algorithm."
+    />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <!-- External Stylesheets -->
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="kmeans-visualizer.css" />
+  </head>
+  <body class="kmeans-body">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <i class="fas fa-infinity"></i>
+        <span>Algo Infinity Verse</span>
+      </div>
+      <ul class="nav-links">
+        <li>
+          <a href="/index.html"><i class="fas fa-home"></i> <span>Home</span></a>
+        </li>
+        <li>
+          <a href="/pages/visualizers/visualizers.html"
+            ><i class="fas fa-project-diagram"></i> <span>Visualizers</span></a
+          >
+        </li>
+        <li class="active">
+          <a href="#"><i class="fas fa-chart-pie"></i> <span>K-Means</span></a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="main-content">
+      <header class="app-header">
+        <div class="header-title">
+          <h1><i class="fas fa-chart-scatter"></i> K-Means Clustering Visualizer</h1>
+          <p>Observe unsupervised learning iteratively group data points into clusters</p>
+        </div>
+      </header>
+
+      <main class="dashboard-grid">
+        <!-- Controls Panel -->
+        <section class="panel glassy controls-panel">
+          <div class="control-group">
+            <label for="numPoints">Data Points: <span id="numPointsVal">300</span></label>
+            <input type="range" id="numPoints" min="10" max="1000" value="300" />
+          </div>
+
+          <div class="control-group">
+            <label for="numClusters">Clusters (k): <span id="numClustersVal">3</span></label>
+            <input type="range" id="numClusters" min="2" max="10" value="3" />
+          </div>
+
+          <div class="btn-group">
+            <button id="btnGenerateData" class="btn btn-secondary">
+              <i class="fas fa-braille"></i> Generate Data
+            </button>
+            <button id="btnInitCentroids" class="btn btn-secondary">
+              <i class="fas fa-star"></i> Init Centroids
+            </button>
+            <button id="btnStep" class="btn btn-primary" disabled>
+              <i class="fas fa-step-forward"></i> Step Forward
+            </button>
+            <button id="btnAutoRun" class="btn btn-accent" disabled>
+              <i class="fas fa-play"></i> Auto Run
+            </button>
+          </div>
+        </section>
+
+        <!-- Status Panel -->
+        <section class="panel glassy status-panel">
+          <div class="status-item">
+            <span class="status-label">Iteration:</span>
+            <span class="status-value" id="stat-iteration">0</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Phase:</span>
+            <span class="status-value" id="stat-phase">Generate Data</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Centroid Movements:</span>
+            <span class="status-value" id="stat-movements">0</span>
+          </div>
+        </section>
+
+        <!-- Canvas Container -->
+        <section class="panel glassy canvas-panel">
+          <div class="canvas-wrapper">
+            <canvas id="kmeansCanvas"></canvas>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="kmeans-visualizer.js"></script>
+  </body>
+</html>
