@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dining Philosophers Simulator | Algo Infinity Verse</title>
+    <meta
+      name="description"
+      content="Simulate the classic Dining Philosophers concurrency problem. Watch threads acquire locks and observe deadlocks."
+    />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="dining-philosophers.css" />
+  </head>
+  <body class="dp-body">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <span class="logo-text">∞</span>
+        <span class="logo-title">AIV OS</span>
+      </div>
+      <ul class="nav-links">
+        <li>
+          <a href="/index.html"><i class="fas fa-home"></i> <span>Home</span></a>
+        </li>
+        <li>
+          <a href="/pages/visualizers/concurrency-simulator/concurrency-simulator.html"
+            ><i class="fas fa-layer-group"></i> <span>Concurrency</span></a
+          >
+        </li>
+        <li class="active">
+          <a href="#"><i class="fas fa-utensils"></i> <span>Dining Philosophers</span></a>
+        </li>
+        <li>
+          <a href="/pages/visualizers/lock-free-playground/lock-free-playground.html"
+            ><i class="fas fa-atom"></i> <span>Lock-Free</span></a
+          >
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+      <header class="app-header">
+        <div class="header-title">
+          <h1><i class="fas fa-utensils text-orange"></i> Dining Philosophers</h1>
+          <p>Concurrency, Deadlocks, and Resource Contention</p>
+        </div>
+        <div class="header-status">
+          <span id="globalStateBadge" class="status-badge running">IDLE</span>
+        </div>
+      </header>
+
+      <div class="dashboard-grid">
+        <!-- Left Panel: Controls -->
+        <div class="panel controls-panel glassy">
+          <h3><i class="fas fa-sliders-h"></i> Simulation Controls</h3>
+
+          <div class="control-group">
+            <button id="btnToggleSim" class="btn btn-primary">
+              <i class="fas fa-play"></i> Start Random Simulation
+            </button>
+            <button id="btnReset" class="btn btn-secondary">
+              <i class="fas fa-redo"></i> Reset
+            </button>
+          </div>
+
+          <div class="divider"></div>
+
+          <h3><i class="fas fa-bug"></i> Deadlock Scenarios</h3>
+          <p class="helper-text">
+            Explore what happens when resources are requested symmetrically.
+          </p>
+
+          <div class="control-group">
+            <button id="btnForceDeadlock" class="btn btn-danger">
+              <i class="fas fa-skull-crossbones"></i> Force Deadlock
+            </button>
+          </div>
+
+          <div class="divider"></div>
+
+          <h3><i class="fas fa-shield-alt"></i> Mitigation Strategy</h3>
+          <div class="toggle-group">
+            <label class="switch">
+              <input type="checkbox" id="toggleHierarchy" />
+              <span class="slider round"></span>
+            </label>
+            <span class="toggle-label">Enable Resource Hierarchy (Dijkstra)</span>
+          </div>
+          <p class="helper-text hierarchy-desc">
+            Philosophers must acquire the lowest-numbered fork first. Prevents circular wait.
+          </p>
+
+          <div class="legend-box">
+            <h4>State Legend</h4>
+            <div class="legend-items">
+              <div class="legend-item">
+                <div class="color-box thinking-color"></div>
+                Thinking (Idle)
+              </div>
+              <div class="legend-item">
+                <div class="color-box hungry-color"></div>
+                Hungry (Waiting)
+              </div>
+              <div class="legend-item">
+                <div class="color-box eating-color"></div>
+                Eating (Acquired)
+              </div>
+              <div class="legend-item">
+                <div class="color-box deadlock-color"></div>
+                Deadlocked
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel: Canvas -->
+        <div class="panel canvas-panel glassy">
+          <div class="canvas-wrapper">
+            <canvas id="dpCanvas"></canvas>
+          </div>
+          <div class="info-overlay">
+            <div class="info-stat">
+              <span class="stat-label">Eating:</span>
+              <span class="stat-value text-green" id="statEating">0</span>
+            </div>
+            <div class="info-stat">
+              <span class="stat-label">Hungry:</span>
+              <span class="stat-value text-orange" id="statHungry">0</span>
+            </div>
+            <div class="info-stat">
+              <span class="stat-label">Thinking:</span>
+              <span class="stat-value text-gray" id="statThinking">5</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Panel: Log -->
+        <div class="panel log-panel glassy">
+          <div class="log-header">
+            <h3><i class="fas fa-terminal"></i> Thread Execution Log</h3>
+            <button id="btnClearLog" class="btn-small"><i class="fas fa-trash"></i> Clear</button>
+          </div>
+          <div class="log-container" id="logContainer">
+            <!-- Logs injected here -->
+            <div class="log-entry system">
+              System initialized. 5 Philosophers, 5 Mutexes (Forks).
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="dining-philosophers.js"></script>
+  </body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Code-to-Diagram Generator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📊 Code-to-Diagram Generator</h1>
+      <p>Convert your code into visual diagrams instantly</p>
+    </header>
+
+    <div class="main-layout">
+      <!-- Left: Code Input -->
+      <div class="panel code-panel">
+        <div class="panel-header">
+          <h3>📝 Code Input</h3>
+          <div class="panel-controls">
+            <select id="languageSelect">
+              <option value="javascript">JavaScript</option>
+              <option value="python">Python</option>
+              <option value="java">Java</option>
+              <option value="cpp">C++</option>
+            </select>
+            <select id="diagramType">
+              <option value="flowchart">Flowchart</option>
+              <option value="class">Class Diagram</option>
+              <option value="sequence">Sequence Diagram</option>
+            </select>
+          </div>
+        </div>
+        <textarea id="codeInput" placeholder="Paste your code here..."></textarea>
+        <div class="panel-footer">
+          <button id="generateBtn">🚀 Generate Diagram</button>
+          <button id="exampleBtn">📋 Load Example</button>
+          <button id="clearBtn">🗑️ Clear</button>
+        </div>
+      </div>
+
+      <!-- Right: Diagram Output -->
+      <div class="panel diagram-panel">
+        <div class="panel-header">
+          <h3>🖼️ Diagram Output</h3>
+          <div class="panel-controls">
+            <button id="exportPngBtn">📥 Export PNG</button>
+            <button id="exportSvgBtn">📥 Export SVG</button>
+          </div>
+        </div>
+        <div class="diagram-container" id="diagramContainer">
+          <div class="placeholder">
+            <span class="placeholder-icon">📐</span>
+            <p>Enter code and click Generate</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

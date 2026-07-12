@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sliding Window · Algo Infinity Verse</title>
+<meta name="description" content="An interactive Dual-Pointer State Machine visualizer for the Minimum Window Substring problem — watch the window expand, validate, and contract with a live frequency-map dashboard.">
+<link rel="stylesheet" href="sliding-window.css">
+</head>
+<body>
+
+<div id="starfield"></div>
+<div class="bg-glow"></div>
+
+<div class="app-shell">
+
+  <!-- ============ Top bar ============ -->
+  <header class="topbar">
+    <a href="../../index.html" class="brand">
+      <span class="logo-mark">🪟</span>
+      <span class="name">Algo Infinity Verse</span>
+    </a>
+
+    <div class="page-title">
+      <h1>Sliding Window</h1>
+      <p>Dual-pointer state machine · Minimum Window Substring</p>
+    </div>
+
+    <div class="topbar-actions">
+      <span class="crumb">Visualizers / <strong>Sliding Window</strong></span>
+      <button class="icon-btn" id="pauseBtn" title="Pause / resume auto-play">⏸</button>
+    </div>
+  </header>
+
+  <!-- ============ Workspace ============ -->
+  <main class="workspace">
+
+    <!-- ---------- Left panel: inputs + playback ---------- -->
+    <aside class="panel">
+      <div class="panel-header"><span class="dot"></span><h2>Input</h2></div>
+      <div class="panel-body">
+
+        <div class="control-group">
+          <div class="control-label"><span>Source string S</span></div>
+          <input type="text" class="text-input" id="sourceInput" value="ADOBECODEBANC" maxlength="40" spellcheck="false" autocomplete="off">
+        </div>
+
+        <div class="control-group">
+          <div class="control-label"><span>Target string T</span></div>
+          <input type="text" class="text-input" id="targetInput" value="ABC" maxlength="12" spellcheck="false" autocomplete="off">
+          <p class="error-text" id="inputError"></p>
+        </div>
+
+        <div class="control-group">
+          <button class="btn primary full" id="applyBtn">▶ Build &amp; Run</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="control-group">
+          <div class="control-label"><span>Playback speed</span><span class="val" id="speedVal">450ms/step</span></div>
+          <input type="range" id="speedSlider" min="80" max="1000" step="20" value="450">
+        </div>
+
+        <div class="btn-row" style="margin-bottom:10px;">
+          <button class="btn" id="stepBackBtn">⏮ Restart</button>
+          <button class="btn" id="stepNextBtn">Step ⏭</button>
+        </div>
+        <button class="btn primary full" id="playBtn">▶ Play</button>
+
+        <div class="divider"></div>
+
+        <div class="legend-item"><span class="swatch expand"></span> Expansion — grow right pointer</div>
+        <div class="legend-item"><span class="swatch valid"></span> Validation — all requirements met</div>
+        <div class="legend-item"><span class="swatch contract"></span> Contraction — shrink left pointer</div>
+        <div class="legend-item"><span class="swatch best"></span> Current global minimum window</div>
+
+      </div>
+    </aside>
+
+    <!-- ---------- Center: array strip stage ---------- -->
+    <section class="panel viewport-panel">
+      <div id="viewport">
+        <div class="viewport-overlay">
+          <span class="chip">Window <strong id="chipWindow">[0, -1]</strong></span>
+          <span class="chip">Length <strong id="chipLen">0</strong></span>
+          <span class="chip">Best <strong id="chipBest">∞</strong></span>
+        </div>
+
+        <div class="phase-badge phase-expand" id="phaseBadge">Expanding</div>
+
+        <div class="stage" id="stage">
+          <div class="strip-wrap" id="stripWrap">
+            <div class="elastic-window" id="elasticWindow"></div>
+            <div class="best-window" id="bestWindowMarker"></div>
+            <div class="char-row" id="charRow"></div>
+            <div class="pointer left" id="leftPointer"><span class="ptr-label">L</span></div>
+            <div class="pointer right" id="rightPointer"><span class="ptr-label">R</span></div>
+          </div>
+        </div>
+
+        <div class="loading-veil" id="loadingVeil">
+          <div class="spinner"></div>
+          <p>indexing the string…</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- Right panel: frequency map + telemetry ---------- -->
+    <aside class="panel">
+      <div class="panel-header"><span class="dot"></span><h2>Frequency Map</h2></div>
+      <div class="panel-body">
+
+        <div class="result-box" id="resultBox">
+          <div class="rtitle">Minimum Window Found</div>
+          <div class="rval" id="resultVal">—</div>
+          <div class="rmeta" id="resultMeta"></div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-box"><div class="num" id="statFormed">0 / 0</div><div class="lbl">Formed / Required</div></div>
+          <div class="stat-box"><div class="num" id="statMoves">0 / 0</div><div class="lbl">R moves / L moves</div></div>
+        </div>
+
+        <div class="control-label"><span>Required character counts</span></div>
+        <div class="freq-dashboard" id="freqDashboard"></div>
+
+        <div class="divider"></div>
+
+        <div class="complexity-box">
+          <div><span class="k">Right pointer moves</span> <span class="v" id="cxRight">≤ N</span></div>
+          <div><span class="k">Left pointer moves</span> <span class="v" id="cxLeft">≤ N</span></div>
+          <div><span class="k">Total work</span> <span class="v">O(N)</span></div>
+        </div>
+
+        <div class="divider"></div>
+        <p class="hint">Each pointer only ever moves forward, so together they traverse the string at most twice — giving a single linear O(N) pass with no backtracking, versus the O(N·|Σ|) or worse of a brute-force substring scan.</p>
+      </div>
+    </aside>
+
+  </main>
+</div>
+
+<script src="sliding-window.js"></script>
+</body>
+</html>
