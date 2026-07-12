@@ -21,5 +21,9 @@ export default {
     uppercase: /[A-Z]/,
     digit: /\d/,
     special: /[!@#$%^&*()_+\-=\[\]{};:'"|,.<>?/~`]/
-  }
+  },
+    // ── HTTP Server Timeouts (#2139) ──────────────────────────────────────────
+  REQUEST_TIMEOUT_MS: 30000,      // 30 seconds for the request to complete
+  HEADERS_TIMEOUT_MS: 31000,      // 31 seconds (slightly higher to prevent errors)
+  KEEP_ALIVE_TIMEOUT_MS: 5000,    // 5 seconds for idle keep-alive connections
 };

@@ -23,18 +23,41 @@ const upload = multer({
   limits: { fileSize: MAX_RESUME_FILE_SIZE_BYTES, files: 1 },
   fileFilter: (req, file, cb) => {
     const allowedMimeTypes = [
-      'application/pdf', // .pdf
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-      'application/msword', // .doc
+      'application/pdf',                                                      // .pdf
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
+      'application/msword'                                                    // .doc
     ];
 
-    if (allowedMimeTypes.includes(file.mimetype)) {
-      cb(null, true); // Accept file
-    } else {
-      cb(new Error('Invalid file type. Only PDF, DOC, and DOCX files are allowed.'), false); // Reject file
+    // 1. Check MIME type (Fast first line of defense)
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      return cb(new Error('Invalid file type. Only PDF, DOC, and DOCX files are allowed.'), false);
     }
-  },
-}).single('resume');
+
+    
+    if (!file.buffer || file.buffer.length < 4) {
+      return cb(new Error('Invalid or corrupted file.'), false);
+    }
+
+    const buffer = file.buffer;
+
+    const isPdf = buffer.subarray(0, 4).compare(Buffer.from('%PDF')) === 0;
+
+    const isDocx = buffer.subarray(0, 4).compare(Buffer.from([0x50, 0x4B, 0x03, 0x04])) === 0;
+
+    const isDoc = buffer.subarray(0, 4).compare(Buffer.from([0xD0, 0xCF, 0x11, 0xE0])) === 0;
+
+    let isValidSignature = false;
+    if (file.mimetype === 'application/pdf' && isPdf) isValidSignature = true;
+    else if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' && isDocx) isValidSignature = true;
+    else if (file.mimetype === 'application/msword' && isDoc) isValidSignature = true;
+
+    if (!isValidSignature) {
+      return cb(new Error('File signature mismatch. The uploaded file content does not match its declared MIME type.'), false);
+    }
+
+    cb(null, true); 
+  }
+}).single("resume");
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
