@@ -944,11 +944,11 @@ const visualizers = [
     desc: 'Step through code execution with line-by-line variable tracking.',
   },
   {
-    name: 'Backprop Engine',
+    name: 'Neural Network Simulator',
     path: '/pages/visualizers/backprop-engine/backprop-engine.html',
-    category: 'Special',
-    icon: 'fa-bolt',
-    desc: 'Automatic differentiation engine for neural network training.',
+    category: 'AI & ML',
+    icon: 'fa-network-wired',
+    desc: 'Interactive 3-layer neural network forward & backward propagation simulator.',
   },
   {
     name: 'V8 Visualizer',
