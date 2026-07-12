@@ -507,6 +507,13 @@ const visualizers = [
     desc: 'Distribute keys across nodes with consistent hashing ring.',
   },
   {
+    name: 'Chord DHT Ring Simulator',
+    path: '/pages/visualizers/chord-simulator/chord-simulator.html',
+    category: 'Distributed Systems',
+    icon: 'fa-circle-notch',
+    desc: 'Interactive Chord DHT simulator demonstrating finger table dynamic calculation and routing paths.',
+  },
+  {
     name: 'Kafka Simulator',
     path: '/pages/visualizers/kafka-simulator/kafka-simulator.html',
     category: 'Distributed Systems',
@@ -526,6 +533,13 @@ const visualizers = [
     category: 'Distributed Systems',
     icon: 'fa-random',
     desc: 'Interactive OT network simulator showing transformation math and conflict resolution.',
+  },
+  {
+    name: 'Paxos Consensus Protocol Simulator',
+    path: '/pages/visualizers/paxos-simulator/paxos-simulator.html',
+    category: 'Distributed Systems',
+    icon: 'fa-network-wired',
+    desc: 'Interactive Paxos message exchange simulator demonstrating proposal consensus and network partitions.',
   },
   {
     name: 'Redlock Simulator',

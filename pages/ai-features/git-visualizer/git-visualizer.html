@@ -11,6 +11,23 @@
     
     <link rel="stylesheet" href="/styles.css" />
     <link rel="stylesheet" href="git-visualizer.css" />
+
+    <!-- Theme Initialization Script -->
+    <script>
+      (function() {
+        try {
+          var storedTheme = localStorage.getItem('theme');
+          var prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+          var theme = storedTheme || (prefersLight ? 'light' : 'dark');
+          if (theme === 'light') {
+            document.documentElement.classList.add('light-mode');
+          } else {
+            document.documentElement.classList.remove('light-mode');
+          }
+        } catch (e) {}
+      })();
+    </script>
+  <script src="/theme.js"></script>
 </head>
 <body class="git-body">
 
@@ -73,3 +90,4 @@
     <script src="git-visualizer.js"></script>
 </body>
 </html>
+

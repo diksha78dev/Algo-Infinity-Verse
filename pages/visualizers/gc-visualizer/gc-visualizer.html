@@ -21,27 +21,32 @@
     <!-- External Stylesheets -->
     <link rel="stylesheet" href="/styles.css" />
     <link rel="stylesheet" href="gc-visualizer.css" />
+    <!-- Theme Initialization Script -->
+    <script>
+      (function () {
+        try {
+          var storedTheme = localStorage.getItem('theme');
+          var prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+          var theme = storedTheme || (prefersLight ? 'light' : 'dark');
+          if (theme === 'light') {
+            document.documentElement.classList.add('light-mode');
+          } else {
+            document.documentElement.classList.remove('light-mode');
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <script src="/theme.js"></script>
   </head>
   <body class="gc-body">
-    <!-- Sidebar Navigation -->
-    <nav class="sidebar">
-      <div class="sidebar-header">
-        <i class="fas fa-infinity"></i>
-        <span>Algo Infinity Verse</span>
+    <nav class="navbar">
+      <div class="nav-logo">
+        <span class="logo-text">∞</span>
+        <span class="logo-title">Algo Infinity Verse</span>
       </div>
-      <ul class="nav-links">
-        <li>
-          <a href="/index.html"><i class="fas fa-home"></i> <span>Home</span></a>
-        </li>
-        <li>
-          <a href="/pages/visualizers/visualizers.html"
-            ><i class="fas fa-project-diagram"></i> <span>Visualizers</span></a
-          >
-        </li>
-        <li class="active">
-          <a href="#"><i class="fas fa-trash-can"></i> <span>GC Simulator</span></a>
-        </li>
-      </ul>
+      <div class="engine-badge" id="engineBadge">
+        <i class="fas fa-memory"></i> V8 Memory Engine
+      </div>
     </nav>
 
     <div class="main-content">

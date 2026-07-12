@@ -1,28 +1,48 @@
-import pdf from "pdf-parse";
-import mammoth from "mammoth";
+import { Worker, isMainThread, parentPort, workerData } from 'worker_threads';
+import { fileURLToPath } from 'url';
 
+if (!isMainThread) {
+  (async () => {
+    try {
+      const { buffer, mimetype } = workerData;
+      // The buffer passed through workerData needs to be reconstructed
+      const buf = Buffer.from(buffer);
 
-export async function extractResumeText(file){
-
-    if(file.mimetype.includes("pdf")){
-
-        const data = await pdf(file.buffer);
-        return data.text;
-
+      if (mimetype.includes('pdf')) {
+        const pdf = (await import('pdf-parse')).default;
+        const data = await pdf(buf);
+        parentPort.postMessage({ result: data.text });
+      } else if (mimetype.includes('word')) {
+        const mammoth = (await import('mammoth')).default;
+        const result = await mammoth.extractRawText({ buffer: buf });
+        parentPort.postMessage({ result: result.value });
+      } else {
+        parentPort.postMessage({ error: 'Unsupported file' });
+      }
+    } catch (err) {
+      parentPort.postMessage({ error: err.message });
     }
+  })();
+}
 
+export async function extractResumeText(file) {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(fileURLToPath(import.meta.url), {
+      workerData: {
+        buffer: file.buffer,
+        mimetype: file.mimetype,
+      },
+    });
 
-    if(file.mimetype.includes("word")){
+    worker.on('message', (msg) => {
+      if (msg.error) reject(new Error(msg.error));
+      else resolve(msg.result);
+    });
 
-        const result = await mammoth.extractRawText({
-            buffer:file.buffer
-        });
+    worker.on('error', reject);
 
-        return result.value;
-
-    }
-
-
-    throw new Error("Unsupported file");
-
+    worker.on('exit', (code) => {
+      if (code !== 0) reject(new Error(`Worker stopped with exit code ${code}`));
+    });
+  });
 }

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chord DHT Ring Simulator | Algo Infinity Verse</title>
+    <meta name="description" content="Simulate a Chord Distributed Hash Table. Watch nodes build finger tables and execute O(log N) routing queries." />
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="chord-simulator.css" />
+</head>
+<body class="chord-body">
+
+    <nav class="navbar chord-nav">
+        <div class="nav-logo">
+            <span class="logo-text">∞</span>
+            <span class="logo-title">Algo Infinity Verse</span>
+        </div>
+        <div class="engine-badge">
+            <i class="fas fa-circle-notch"></i> Chord DHT Simulator
+        </div>
+    </nav>
+
+    <main class="chord-workspace">
+        
+        <!-- Left Panel: Node Actions -->
+        <div class="panel-left">
+            <div class="panel-header">
+                <h3><i class="fas fa-sliders-h"></i> DHT Controls</h3>
+            </div>
+            
+            <div class="control-section">
+                <h4><i class="fas fa-plus-circle"></i> Add Node</h4>
+                <div class="propose-form">
+                    <label for="newNodeId">Node Identifier (0-63):</label>
+                    <input type="number" id="newNodeId" class="chord-input" min="0" max="63" value="12" />
+                    <button type="button" class="btn btn-primary w-100 mt-2" id="btnAddNode">
+                        <i class="fas fa-plus"></i> Join Node to Ring
+                    </button>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h4><i class="fas fa-search"></i> Query Lookup</h4>
+                <div class="propose-form">
+                    <label for="startNodeSelect">Start Node:</label>
+                    <select id="startNodeSelect" class="chord-select"></select>
+                    
+                    <label for="targetKey" class="mt-2">Search Key (0-63):</label>
+                    <input type="number" id="targetKey" class="chord-input" min="0" max="63" value="42" />
+                    
+                    <button type="button" class="btn btn-accent w-100 mt-2" id="btnLookup">
+                        <i class="fas fa-location-arrow"></i> Find Successor
+                    </button>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h4><i class="fas fa-info-circle"></i> Node Inspector</h4>
+                <div class="inspector-panel" id="nodeInspector">
+                    <p class="text-secondary">Click on any node in the ring to inspect its Finger Table and key distribution.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Visualization -->
+        <div class="panel-right">
+            <div class="viz-header">
+                <h2><i class="fas fa-dharmachakra"></i> Chord Identifier Space (M = 6)</h2>
+                <div class="legend">
+                    <span class="legend-item"><span class="dot active-node"></span> Node</span>
+                    <span class="legend-item"><span class="dot key-item"></span> Key</span>
+                    <span class="legend-item"><span class="dot query-hop"></span> Hop Link</span>
+                </div>
+            </div>
+            
+            <div class="canvas-container">
+                <canvas id="chordCanvas"></canvas>
+            </div>
+            
+            <div class="explanation-panel">
+                <h3><i class="fas fa-terminal"></i> Activity Log</h3>
+                <div id="logTerminal" class="terminal-log">
+                    <div class="log-entry">Chord DHT initialized with 3 initial nodes. Identifier space M=6 (64 slots).</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="chord-simulator.js"></script>
+</body>
+</html>
