@@ -2064,13 +2064,14 @@ async function handleApi(req, res, pathname) {
       if (useFirestore) {
         let query = db.collection(COLLECTIONS.AUDITS_HISTORY).where('userId', '==', session.sub);
         if (repoUrl) query = query.where('repoUrl', '==', repoUrl);
-        const snapshot = await query.orderBy('timestamp', 'asc').get();
-        history = snapshot.docs.map((doc) => doc.data());
+        const snapshot = await query.orderBy('timestamp', 'desc').limit(100).get();
+        history = snapshot.docs.map((doc) => doc.data()).reverse();
       } else {
         const allAudits = await readAudits();
         history = allAudits.filter((a) => a.userId === session.sub);
         if (repoUrl) history = history.filter((a) => a.repoUrl === repoUrl);
-        history.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        history = history.slice(0, 100).reverse();
       }
 
       const trends = history.map((a) => ({
@@ -3807,16 +3808,16 @@ io.on('connection', (socket) => {
 
     const diff = valid.difficulty;
     if (!matchmakingQueue[diff]) matchmakingQueue[diff] = [];
-    
+
     // Check if someone is already waiting
     const queue = matchmakingQueue[diff];
-    const opponentIdx = queue.findIndex(u => u.userId !== valid.userId);
-    
+    const opponentIdx = queue.findIndex((u) => u.userId !== valid.userId);
+
     if (opponentIdx !== -1) {
       // Match found!
       const opponent = queue.splice(opponentIdx, 1)[0];
       const battleId = crypto.randomUUID();
-      
+
       const problemKeys = Object.keys(TEST_CASES);
       const chosenTitle = problemKeys[Math.floor(Math.random() * problemKeys.length)];
       const problem = TEST_CASES[chosenTitle];
@@ -3829,9 +3830,9 @@ io.on('connection', (socket) => {
         problemDescription: `Implement ${problem.func}. Test cases await.`,
         participants: {
           [valid.userId]: { name: valid.userName, progress: 0, status: 'active' },
-          [opponent.userId]: { name: opponent.userName, progress: 0, status: 'active' }
+          [opponent.userId]: { name: opponent.userName, progress: 0, status: 'active' },
         },
-        winner: null
+        winner: null,
       };
 
       activeBattles.set(battleId, battleData);
@@ -3845,16 +3846,16 @@ io.on('connection', (socket) => {
       io.to(`battle_${battleId}`).emit('match-found', {
         battleId,
         battleData,
-        opponentName: { [valid.userId]: opponent.userName, [opponent.userId]: valid.userName }
+        opponentName: { [valid.userId]: opponent.userName, [opponent.userId]: valid.userName },
       });
     } else {
       // Add to queue
       // Remove existing entries for this user first
-      matchmakingQueue[diff] = queue.filter(u => u.userId !== valid.userId);
+      matchmakingQueue[diff] = queue.filter((u) => u.userId !== valid.userId);
       matchmakingQueue[diff].push({
         userId: valid.userId,
         userName: valid.userName,
-        socketId: socket.id
+        socketId: socket.id,
       });
     }
   });
@@ -3874,18 +3875,21 @@ io.on('connection', (socket) => {
     }
 
     const passed = runTestCases(battle.problemTitle, valid.code);
-    
+
     if (passed) {
       battle.status = 'completed';
       battle.winner = valid.userId;
       io.to(`battle_${valid.battleId}`).emit('battle-over', {
         winnerId: valid.userId,
         winnerName: battle.participants[valid.userId].name,
-        badge: "Speed Demon",
-        xpAwarded: 100 // Mock XP
+        badge: 'Speed Demon',
+        xpAwarded: 100, // Mock XP
       });
     } else {
-      socket.emit('battle-submit-result', { success: false, message: 'Tests failed. Keep trying!' });
+      socket.emit('battle-submit-result', {
+        success: false,
+        message: 'Tests failed. Keep trying!',
+      });
     }
   });
 
