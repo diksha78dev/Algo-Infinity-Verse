@@ -338,8 +338,11 @@
       input.style.borderColor = message ? '#ef4444' : 'rgba(255, 255, 255, 0.1)';
     }
 
+    const touched = new Set();
+
     form.querySelectorAll('input').forEach((input) => {
       input.addEventListener('input', () => {
+        if (input.value) touched.add(input.name);
         if (validators[input.name]) {
           showError(input, validators[input.name](input.value));
         }
@@ -356,7 +359,7 @@
       });
 
       input.addEventListener('blur', () => {
-        if (validators[input.name]) {
+        if (touched.has(input.name) && validators[input.name]) {
           showError(input, validators[input.name](input.value));
         }
       });
@@ -370,6 +373,7 @@
       const dataObj = Object.fromEntries(formData.entries());
 
       form.querySelectorAll('input').forEach((input) => {
+        touched.add(input.name);
         if (validators[input.name]) {
           const errorMsg = validators[input.name](input.value);
           showError(input, errorMsg);

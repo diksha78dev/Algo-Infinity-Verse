@@ -222,10 +222,6 @@ body {
     display: none !important;
 }
 
-.hidden {
-    display: none !important;
-}
-
 /* ===== LOADING SCREEN ===== */
 #loading-screen {
     position: fixed;
@@ -248,10 +244,6 @@ body {
 
 .loader {
     text-align: center;
-}
-
-.big-box {
-    transition: transform 0.3s ease-in;
 }
 
 .big-box {
@@ -4131,18 +4123,11 @@ section[id] {
 }
 
 .quiz-card-desc {
-
     color: var(--text-secondary);
     font-size: 0.95rem;
     margin-bottom: 1rem;
     line-height: 1.6;
     pointer-events: none;
-
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    margin-bottom: 1rem;
-    line-height: 1.6;
-
 }
 
 .quiz-card-meta {

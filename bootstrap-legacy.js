@@ -18,7 +18,7 @@
     "/modules/abortManager.js",
     "/modules/cacheManager.js",
     "/utils/storage.js",
-    "/modules/userProgress.js",
+
     "/modules/spaced-repetition.js",
     "/modules/utils.js"
   ];

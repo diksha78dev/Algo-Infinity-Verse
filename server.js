@@ -2068,13 +2068,14 @@ async function handleApi(req, res, pathname) {
       if (useFirestore) {
         let query = db.collection(COLLECTIONS.AUDITS_HISTORY).where('userId', '==', session.sub);
         if (repoUrl) query = query.where('repoUrl', '==', repoUrl);
-        const snapshot = await query.orderBy('timestamp', 'asc').get();
-        history = snapshot.docs.map((doc) => doc.data());
+        const snapshot = await query.orderBy('timestamp', 'desc').limit(100).get();
+        history = snapshot.docs.map((doc) => doc.data()).reverse();
       } else {
         const allAudits = await readAudits();
         history = allAudits.filter((a) => a.userId === session.sub);
         if (repoUrl) history = history.filter((a) => a.repoUrl === repoUrl);
-        history.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        history = history.slice(0, 100).reverse();
       }
 
       const trends = history.map((a) => ({
