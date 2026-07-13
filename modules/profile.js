@@ -1,5 +1,18 @@
 import { renderBookmarkCollectionsPanel } from './bookmarkUI.js';
 
+function renderProfileAvatar(el, av) {
+  if (!el) return;
+  if (typeof av === 'string' && av.startsWith('data:image')) {
+    el.innerHTML = `<img src="${av}" alt="Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+    el.style.fontSize = '0';
+    return;
+  }
+  const initial = (av && av.initial) ? av.initial : 'L';
+  const bg = (av && av.bg) ? av.bg : '#7c3aed';
+  el.innerHTML = `<span style="display:inline-flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;background:${bg};color:#fff;font-size:1.3rem;font-weight:600;font-family:'Poppins',sans-serif;">${initial}</span>`;
+  el.style.fontSize = '0';
+}
+
 export function initProfile() {
   window.initProfile = initProfile;
   const userProgress = window.userProgress || {};
@@ -36,8 +49,20 @@ export function initProfile() {
     });
   }
 
-  const avatarIcons = document.querySelectorAll('.avatar-icon');
-  avatarIcons.forEach((el) => (el.textContent = userProgress.avatar || '🚀'));
+ const avatarIcons = document.querySelectorAll('.avatar-icon');
+avatarIcons.forEach((el) => renderProfileAvatar(el, userProgress.avatar));
+
+const profileBio = document.getElementById('profileBio');
+
+if (profileBio) {
+  if (userProgress.bio) {
+    profileBio.textContent = userProgress.bio;
+    profileBio.classList.remove('empty-state');
+  } else {
+    profileBio.textContent = 'No bio yet. Click edit to add one!';
+    profileBio.classList.add('empty-state');
+  }
+}
 
   updateProfile();
   updateProfileLeaderboard();
@@ -199,10 +224,101 @@ export function updateProfile() {
 
   document
     .querySelectorAll('.avatar-icon')
-    .forEach((el) => (el.textContent = userProgress.avatar || '🚀'));
+    .forEach((el) => renderProfileAvatar(el, userProgress.avatar));
   updateLevelProgress();
+  renderRecentActivity();
+  renderSkillsMastery(); 
+}
+const XP_BY_DIFFICULTY = { easy: 100, medium: 250, hard: 500 };
+
+function renderRecentActivity() {
+  const container = document.getElementById('recentActivityList');
+  if (!container) return;
+
+  const userProgress = window.userProgress || {};
+  const practiceProblems = window.practiceProblems || [];
+  const completedIds = userProgress.completedProblems || [];
+  const submittedSolutions = userProgress.submittedSolutions || {};
+
+  if (!completedIds.length) {
+    container.innerHTML = '<p class="empty-state">No problems solved yet. Go solve one!</p>';
+    return;
+  }
+
+  const entries = completedIds
+    .map((id) => {
+      const problem = practiceProblems.find((p) => p.id === id);
+      if (!problem) return null;
+      const sub = submittedSolutions[id];
+      const date = sub && sub.date ? new Date(sub.date) : null;
+      return {
+        id: problem.id,
+        title: problem.title,
+        difficulty: (problem.difficulty || 'easy').toLowerCase(),
+        xp: XP_BY_DIFFICULTY[(problem.difficulty || 'easy').toLowerCase()] || 100,
+        date,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => (b.date ? b.date.getTime() : 0) - (a.date ? a.date.getTime() : 0))
+    .slice(0, 5);
+
+  container.innerHTML = entries
+    .map((entry) => {
+      const dateStr = entry.date
+        ? entry.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        : '';
+      return `<button type="button" class="recent-activity-item" data-id="${entry.id}">
+        <span class="recent-activity-title">${escapeHtmlText(entry.title)}</span>
+        <span class="difficulty-badge ${entry.difficulty}">${entry.difficulty}</span>
+        <span class="recent-activity-xp">+${entry.xp} XP</span>
+        <span class="recent-activity-date">${dateStr}</span>
+      </button>`;
+    })
+    .join('');
+
+  container.querySelectorAll('.recent-activity-item').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const problemId = Number(btn.dataset.id);
+      const problem = practiceProblems.find((p) => p.id === problemId);
+      if (problem && typeof window.openQuizEditor === 'function') window.openQuizEditor(problem);
+    });
+  });
 }
 
+function renderSkillsMastery() {
+  const container = document.getElementById('skillsMasteryGrid');
+  if (!container) return;
+
+  const dsaTopics = window.dsaTopics || [];
+  if (!dsaTopics.length || typeof window.getTopicProgress !== 'function') {
+    container.innerHTML = '<p class="empty-state">No topics available yet.</p>';
+    return;
+  }
+
+  container.innerHTML = dsaTopics
+    .map((topic) => {
+      const progress = window.getTopicProgress(topic.name);
+      if (!progress.total) return '';
+      return `<div class="skill-mastery-item">
+        <div class="mastery-header">
+          <span class="mastery-label">${topic.icon} ${topic.name}</span>
+          <span class="mastery-stats">${progress.completed}/${progress.total} solved</span>
+        </div>
+        <div class="mastery-bar">
+          <div class="mastery-fill" style="width: ${progress.percentage}%"></div>
+        </div>
+        <span class="mastery-percentage">${progress.percentage}%</span>
+      </div>`;
+    })
+    .join('');
+}
+
+function escapeHtmlText(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
 function updateLevelProgress() {
   const userProgress = window.userProgress || {};
   const levels = [0, 1000, 2500, 5000, 10000, 20000, 50000, 100000];
@@ -264,15 +380,24 @@ function updateProfileLeaderboard() {
 
 function renderProfileLeaderboardFallback(container) {
   const userProgress = window.userProgress || {};
-  const currentUser = {
-    id: 'local-user',
-    name: userProgress.name || 'Learner',
-    xp: userProgress.xp || 0,
-    level: userProgress.level || 1,
-    avatar: userProgress.avatar || '🚀',
-    rank: 1,
-  };
-  renderProfileLeaderboardEntries(container, [currentUser], 'local-user');
+
+  const mockLeaderboard = [
+    { id: 'bot-1', name: 'CodeNinja', xp: 12450, level: 5, avatar: 'C', rank: 1 },
+    { id: 'bot-2', name: 'AlgoMaster', xp: 9800, level: 4, avatar: 'A', rank: 2 },
+    { id: 'bot-3', name: 'ByteWizard', xp: 7200, level: 4, avatar: 'B', rank: 3 },
+    { id: 'bot-4', name: 'DevHero', xp: 5100, level: 3, avatar: 'D', rank: 4 },
+    { id: 'bot-5', name: 'PixelForge', xp: 3600, level: 3, avatar: 'P', rank: 5 },
+    {
+      id: 'local-user',
+      name: userProgress.name || 'Learner',
+      xp: userProgress.xp || 0,
+      level: userProgress.level || 1,
+      avatar: userProgress.avatar || '🚀',
+      rank: 6,
+    },
+  ];
+
+  renderProfileLeaderboardEntries(container, mockLeaderboard, 'local-user');
 }
 
 function renderProfileLeaderboardRows(container, leaders, currentUserId) {

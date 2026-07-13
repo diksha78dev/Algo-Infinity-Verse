@@ -1901,7 +1901,7 @@ async function handleApi(req, res, pathname) {
       user: {
         name: session?.name || 'John Doe',
         username: session?.email?.split('@')[0] || 'johndoe',
-        avatar: '🚀',
+        avatar: { initial: 'L', bg: '#7c3aed' },
         bio: 'Passionate about DSA and building cool stuff!',
         joinedDate: '2024-01-15',
       },

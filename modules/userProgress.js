@@ -2,8 +2,11 @@
 // USER PROGRESS STATE
 // ============================================
 window.userProgress = {
+  name: "Learner",
+  avatar: "🚀",
+  bio: '',
   name: 'Learner',
-  avatar: '🚀',
+  avatar: { initial: 'L', bg: '#7c3aed' },
   completedProblems: [],
   completedDailyChallenges: [],
   codingPersonality: {
@@ -100,7 +103,20 @@ function updateProfile() {
   }
   document
     .querySelectorAll('.avatar-icon')
-    .forEach((el) => (el.textContent = userProgress.avatar || '🚀'));
+    .forEach((el) => renderAvatar(el, userProgress.avatar));
+
+  function renderAvatar(el, av) {
+    if (!el) return;
+    if (typeof av === 'string' && av.startsWith('data:image')) {
+      el.innerHTML = `<img src="${av}" alt="Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      el.style.fontSize = '0';
+      return;
+    }
+    const initial = (av && av.initial) ? av.initial : 'L';
+    const bg = (av && av.bg) ? av.bg : '#7c3aed';
+    el.innerHTML = `<span style="display:inline-flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;background:${bg};color:#fff;font-size:1.3rem;font-weight:600;font-family:'Poppins',sans-serif;">${initial}</span>`;
+    el.style.fontSize = '0';
+  }
   const profileSectionName = document.getElementById('profileSectionName');
   if (profileSectionName) profileSectionName.textContent = userProgress.name || 'Learner';
   updateLevelProgress();
@@ -123,7 +139,7 @@ function updateLevelProgress() {
   if (progressLabelSection) progressLabelSection.textContent = Math.round(progressPercent) + '%';
 }
 
-export function updateStreak() {
+function updateStreak() {
   const today = new Date();
   const lastActive = userProgress.lastActive ? new Date(userProgress.lastActive) : null;
   if (lastActive) {
@@ -169,7 +185,7 @@ function formatDateKey(date) {
   return `${y}-${m}-${d}`;
 }
 
-export function parseDateKey(key) {
+function parseDateKey(key) {
   const [y, m, d] = key.split('-').map(Number);
   return new Date(y, m - 1, d);
 }
@@ -195,7 +211,7 @@ function backfillActivityData() {
   }
 }
 
-export function recordDailyActivity(problemCount = 1) {
+function recordDailyActivity(problemCount = 1) {
   if (!userProgress.activityData) userProgress.activityData = {};
   const today = new Date();
   const dateKey = formatDateKey(today);
@@ -276,7 +292,7 @@ async function getAuthenticatedSession() {
   return cachedSession;
 }
 
-export async function saveUserData() {
+window.saveUserData = async function saveUserData() {
   try {
     userProgress.lastActive = new Date().toISOString();
     if (!Array.isArray(userProgress.bookmarkCollections)) userProgress.bookmarkCollections = [];
@@ -294,7 +310,7 @@ export async function saveUserData() {
   }
 }
 
-export async function loadUserData() {
+async function loadUserData() {
   try {
     if (window.StorageDB) {
       await window.StorageDB.migrateFromLocalStorage();
@@ -338,7 +354,7 @@ export async function loadUserData() {
     } else {
       Object.assign(userProgress, {
         name: 'Learner',
-        avatar: '🚀',
+        avatar: { initial: 'L', bg: '#7c3aed' },
         completedProblems: [],
         completedDailyChallenges: [],
         codingPersonality: {
@@ -389,7 +405,7 @@ export async function loadUserData() {
     console.error('Error loading user data:', e);
     Object.assign(userProgress, {
       name: 'Learner',
-      avatar: '🚀',
+      avatar: { initial: 'L', bg: '#7c3aed' },
       completedProblems: [],
       completedDailyChallenges: [],
       codingPersonality: {

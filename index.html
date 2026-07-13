@@ -104,9 +104,17 @@
         padding-right: 4px;
       }
 
-      .activity-feed::-webkit-scrollbar { width: 4px; }
-      .activity-feed::-webkit-scrollbar-track { background: var(--bg-primary); border-radius: 2px; }
-      .activity-feed::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 2px; }
+      .activity-feed::-webkit-scrollbar {
+        width: 4px;
+      }
+      .activity-feed::-webkit-scrollbar-track {
+        background: var(--bg-primary);
+        border-radius: 2px;
+      }
+      .activity-feed::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 2px;
+      }
 
       .activity-item {
         display: flex;
@@ -136,15 +144,39 @@
         font-size: 16px;
       }
 
-      .activity-icon.solved { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
-      .activity-icon.quiz { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
-      .activity-icon.badge { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
-      .activity-icon.streak { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
-      .activity-icon.level { background: rgba(124, 58, 237, 0.15); color: #a78bfa; }
-      .activity-icon.xp { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
-      .activity-icon.practice { background: rgba(6, 182, 212, 0.15); color: #06b6d4; }
+      .activity-icon.solved {
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+      }
+      .activity-icon.quiz {
+        background: rgba(59, 130, 246, 0.15);
+        color: #3b82f6;
+      }
+      .activity-icon.badge {
+        background: rgba(251, 191, 36, 0.15);
+        color: #fbbf24;
+      }
+      .activity-icon.streak {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+      }
+      .activity-icon.level {
+        background: rgba(124, 58, 237, 0.15);
+        color: #a78bfa;
+      }
+      .activity-icon.xp {
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+      }
+      .activity-icon.practice {
+        background: rgba(6, 182, 212, 0.15);
+        color: #06b6d4;
+      }
 
-      .activity-content { flex: 1; min-width: 0; }
+      .activity-content {
+        flex: 1;
+        min-width: 0;
+      }
 
       .activity-content .activity-message {
         font-size: 0.9rem;
@@ -180,7 +212,10 @@
         margin-bottom: 12px;
       }
 
-      .activity-empty p { margin: 0; font-size: 0.9rem; }
+      .activity-empty p {
+        margin: 0;
+        font-size: 0.9rem;
+      }
 
       .activity-feed-footer {
         display: flex;
@@ -209,15 +244,30 @@
       }
 
       @keyframes activitySlideIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
 
-      .activity-item.new { border-left: 3px solid var(--primary); }
+      .activity-item.new {
+        border-left: 3px solid var(--primary);
+      }
 
-      .dark .activity-item { background: #0f172a; border-color: #334155; }
-      .dark .activity-item:hover { border-color: #7c3aed; }
-      .dark .activity-empty i { color: #334155; }
+      .dark .activity-item {
+        background: #0f172a;
+        border-color: #334155;
+      }
+      .dark .activity-item:hover {
+        border-color: #7c3aed;
+      }
+      .dark .activity-empty i {
+        color: #334155;
+      }
     </style>
   </head>
 
@@ -244,7 +294,7 @@
 
     <!-- Offline Status Banner -->
     <div id="offline-banner" class="offline-banner hidden" aria-live="polite">
-      <i class="fas fa-wifi-slash"></i> You are currently offline. Some features may be limited, but
+      <i class="fas fa-wifi"></i> You are currently offline. Some features may be limited, but
       cached content is available.
     </div>
 
@@ -629,7 +679,7 @@
             <div class="dashboard-card profile-card">
               <div class="profile-header">
                 <div class="profile-avatar">
-                  <span class="avatar-icon">🚀</span>
+                  <span class="avatar-icon">L</span>
                 </div>
                 <div class="profile-info">
                   <h3 id="profileName">Learner</h3>
@@ -674,7 +724,7 @@
                     <span id="profileLevelProgress">0%</span>
                   </div>
                   <div class="progress-bar">
-                    <div class="progress-fill" id="profileProgressBarSection"></div>
+                    <div class="progress-fill" id="profileProgressBar"></div>
                   </div>
                 </div>
               </div>
@@ -1049,7 +1099,6 @@
         document.dispatchEvent(new Event('partialsLoaded'));
       })();
     </script>
-
 
     <script type="module" src="./modules/aiHintsBootstrap.js"></script>
   </body>
