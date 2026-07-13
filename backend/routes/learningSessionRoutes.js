@@ -183,6 +183,15 @@ export async function setupLearningSessionRoutes(req, res, pathname) {
     if (!sessionUser) return sendJson(res, 401, { error: 'Authentication required.' });
 
     const sessionId = timelineMatch[1];
+
+    if (!sessionId || sessionId.trim() === '') {
+      return sendJson(res, 400, { error: 'Session identifier cannot be empty or contain only whitespace.' });
+    }
+    // Enforce exact format: `sess_` followed by standard UUID v4
+    if (!/^sess_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(sessionId)) {
+      return sendJson(res, 400, { error: 'Invalid session identifier format. Must start with "sess_" and follow the expected UUID format.' });
+    }
+
     const sessions = await readArray(LEARNING_SESSIONS_FILE);
     const events = await readArray(LEARNING_EVENTS_FILE);
 
