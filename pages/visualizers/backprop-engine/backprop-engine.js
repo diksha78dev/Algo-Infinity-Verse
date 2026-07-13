@@ -435,6 +435,123 @@ class NeuralNetVisualizer {
   spawnParticles(activeEdges, type) {
     this.particles = [];
     const color =
+class BackpropEngine {
+  constructor(network) {
+    this.net = network;
+    this.learningRate = 0.5;
+    this.target = 1.0;
+    this.activationType = 'sigmoid';
+    this.loss = 0;
+  }
+
+  *runEpoch() {
+    // --- 1. FORWARD PASS (SUM) ---
+    // Hidden Layer
+    for (let h of this.net.hidden) {
+      let sum = h.bias;
+      let equation = `z_${h.label} = (${h.bias}) `;
+      for (let e of this.net.edges.filter((ed) => ed.target === h)) {
+        sum += e.source.a * e.weight;
+        equation += `+ (${e.weight.toFixed(2)} · ${e.source.a.toFixed(2)}) `;
+      }
+      h.z = sum;
+      // Activate immediately so the output layer's sum below uses this epoch's value
+      h.a = MathEngine.activate(h.z, this.activationType);
+      yield {
+        step: 'step-fwd-sum',
+        type: 'forward',
+        edges: this.net.edges.filter((e) => e.target === h),
+        math: equation,
+      };
+    }
+    // Output Layer
+    let outSum = this.net.output.bias;
+    let outEq = `z_${this.net.output.label} = (${this.net.output.bias}) `;
+    for (let e of this.net.edges.filter((ed) => ed.target === this.net.output)) {
+      outSum += e.source.a * e.weight;
+      outEq += `+ (${e.weight.toFixed(2)} · ${e.source.a.toFixed(2)}) `;
+    }
+    this.net.output.z = outSum;
+    yield {
+      step: 'step-fwd-sum',
+      type: 'forward',
+      edges: this.net.edges.filter((e) => e.target === this.net.output),
+      math: outEq,
+    };
+
+    // --- 2. FORWARD PASS (ACTIVATION) ---
+    for (let h of this.net.hidden) h.a = MathEngine.activate(h.z, this.activationType);
+    this.net.output.a = MathEngine.activate(this.net.output.z, this.activationType);
+    yield {
+      step: 'step-fwd-act',
+      type: 'forward',
+      edges: [],
+      math: `a = ${this.activationType}(z)`,
+    };
+
+    // --- 3. COMPUTE LOSS ---
+    this.loss = 0.5 * Math.pow(this.target - this.net.output.a, 2);
+    yield {
+      step: 'step-loss',
+      type: 'loss',
+      edges: [],
+      math: `L = 0.5 · (${this.target} - ${this.net.output.a.toFixed(3)})² = <span class="eq-hl">${this.loss.toFixed(4)}</span>`,
+    };
+
+    // --- 4. BACKPROPAGATION (OUTPUT NODE) ---
+    // ∂L/∂a = (a - y)
+    const dL_da = this.net.output.a - this.target;
+    // ∂a/∂z = f'(z)
+    const da_dz = MathEngine.derivative(this.net.output.a, this.activationType);
+    // δ_o = ∂L/∂z = ∂L/∂a * ∂a/∂z
+    this.net.output.delta = dL_da * da_dz;
+
+    // Gradients for Output Weights
+    let outEdges = this.net.edges.filter((e) => e.target === this.net.output);
+    for (let e of outEdges) {
+      // ∂L/∂w = δ_o * a_h
+      e.grad = this.net.output.delta * e.source.a;
+    }
+
+    let backEq = `δ_o = (${this.net.output.a.toFixed(2)} - ${this.target}) · f'(${this.net.output.z.toFixed(2)}) = <span class="eq-hl">${this.net.output.delta.toFixed(4)}</span>`;
+    yield { step: 'step-back-out', type: 'backward', edges: outEdges, math: backEq };
+
+    // --- 5. BACKPROPAGATION (HIDDEN NODES) ---
+    let hidEdges = this.net.edges.filter((e) => this.net.hidden.includes(e.target));
+    for (let h of this.net.hidden) {
+      // Error propagated back: Σ(δ_o * w_ho)
+      let err_sum = 0;
+      for (let e of outEdges.filter((ed) => ed.source === h)) {
+        err_sum += this.net.output.delta * e.weight;
+      }
+      // δ_h = err_sum * f'(z_h)
+      h.delta = err_sum * MathEngine.derivative(h.a, this.activationType);
+
+      // Gradients for Hidden Weights
+      for (let e of hidEdges.filter((ed) => ed.target === h)) {
+        e.grad = h.delta * e.source.a;
+      }
+    }
+
+    let hidEq = `δ_h = Σ(δ_o · w) · f'(z_h)`;
+    yield { step: 'step-back-hid', type: 'backward', edges: hidEdges, math: hidEq };
+
+    // --- 6. WEIGHT UPDATES (GRADIENT DESCENT) ---
+    for (let e of this.net.edges) {
+      e.weight -= this.learningRate * e.grad;
+    }
+    for (let n of [...this.net.hidden, this.net.output]) {
+      n.bias -= this.learningRate * n.delta;
+    }
+
+    yield {
+      step: 'step-update',
+      type: 'update',
+      edges: this.net.edges,
+      math: `w_new = w_old - ${this.learningRate} · ∂L/∂w`,
+    };
+  }
+}
       type === 'forward' ? COLORS.forward : type === 'backward' ? COLORS.backward : COLORS.update;
     const direction = type === 'backward' ? -1 : 1; // Gradients flow backward
 
