@@ -251,8 +251,11 @@ class NeuralNetVisualizer {
     this.mathEq = document.getElementById('math-equation');
 
     document.getElementById('input-target').addEventListener('change', (e) => {
-      this.engine.target = parseFloat(e.target.value);
-      this.updateTelemetry();
+      const parsed = parseFloat(e.target.value);
+      if (!Number.isNaN(parsed)) {
+        this.engine.target = parsed;
+        this.updateTelemetry();
+      }
     });
     document.getElementById('slider-lr').addEventListener('input', (e) => {
       const val = parseFloat(e.target.value);
