@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import securityConfig from '../config/security.js';
 
-const {
+export const {
   SIGNUP_RATE_LIMIT,
   SIGNUP_WINDOW_MS,
   AUTH_DELAY_MS,

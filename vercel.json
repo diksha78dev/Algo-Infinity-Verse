@@ -1,5 +1,4 @@
-{  
-  
+{
   "outputDirectory": ".",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
@@ -72,6 +71,10 @@
     {
       "source": "/algorithm-timeline",
       "destination": "/algorithm-timeline.html"
+    },
+    {
+      "source": "/roadmaps",
+      "destination": "/pages/roadmaps/roadmaps.html"
     },
     {
       "source": "/api/battles/:path*",
