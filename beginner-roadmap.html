@@ -183,31 +183,34 @@
         transition: width 1s ease;
       }
 
-@media(max-width:768px){
-    .hero h1{ font-size:2rem; }
-    .roadmap-item{
-        flex-direction:column;
-        text-align:center;
-    }
-}
-</style>
-  <script src="/theme.js"></script>
-</head>
-<body>
-
-<nav class="navbar">
-    <div class="logo">∞ Algo Infinity Verse</div>
-    <a href="index.html#roadmap" class="back-btn">
-        <i class="fas fa-arrow-left"></i> Back
-    </a>
-    <a href="/pages/visualizers/algorithm-timeline/algorithm-timeline.html" class="back-btn" style="margin-left:10px;">
+      @media (max-width: 768px) {
+        .hero h1 {
+          font-size: 2rem;
+        }
+        .roadmap-item {
+          flex-direction: column;
+          text-align: center;
+        }
+      }
+    </style>
+    <script src="/theme.js"></script>
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="logo">∞ Algo Infinity Verse</div>
+      <a href="index.html#roadmap" class="back-btn"> <i class="fas fa-arrow-left"></i> Back </a>
+      <a
+        href="/pages/visualizers/algorithm-timeline/algorithm-timeline.html"
+        class="back-btn"
+        style="margin-left: 10px"
+      >
         <i class="fas fa-history"></i> Timeline
       </a>
     </nav>
 
     <section class="hero">
-      <h1>🌱 Beginner DSA Roadmap</h1>
-      <p>
+      <h1 id="roadmapTitle">🌱 Beginner DSA Roadmap</h1>
+      <p id="roadmapDesc">
         Start your DSA journey from scratch! This roadmap covers all fundamental concepts you need
         to crack coding interviews at top tech companies. Follow the steps in order for best
         results.
@@ -215,128 +218,13 @@
     </section>
 
     <div class="progress-section">
-      <h3>📊 Estimated Completion: 8-12 Weeks</h3>
+      <h3 id="roadmapTime">📊 Estimated Completion: 8-12 Weeks</h3>
     </div>
 
-    <section class="roadmap-container">
-      <div class="roadmap-item">
-        <div class="icon-box">
-          <i class="fas fa-code"></i>
-        </div>
-        <div class="content">
-          <h2>1. Programming Fundamentals</h2>
-          <p>Variables, Data Types, Loops, Conditionals, Functions, OOP basics</p>
-          <span class="badge badge-easy">Easy</span>
-          <div class="time-estimate">⏱️ Estimated: 1 week</div>
-        </div>
-      </div>
-
-      <div class="roadmap-item">
-        <div class="icon-box">
-          <i class="fas fa-clock"></i>
-        </div>
-        <div class="content">
-          <h2>2. Time & Space Complexity</h2>
-          <p>Big O Notation, Best/Average/Worst Case, O(1), O(n), O(log n), O(n²)</p>
-          <span class="badge badge-easy">Easy</span>
-          <div class="time-estimate">⏱️ Estimated: 3-4 days</div>
-        </div>
-      </div>
-
-      <div class="roadmap-item">
-        <div class="icon-box">
-          <i class="fas fa-th"></i>
-        </div>
-        <div class="content">
-          <h2>3. Arrays</h2>
-          <p>Array operations, Two Pointers, Sliding Window, Prefix Sum, Kadane's Algorithm</p>
-          <span class="badge badge-easy">Easy</span>
-          <div class="time-estimate">⏱️ Estimated: 1 week</div>
-        </div>
-      </div>
-
-      <div class="roadmap-item">
-        <div class="icon-box">
-          <i class="fas fa-font"></i>
-        </div>
-        <div class="content">
-          <h2>4. Strings</h2>
-          <p>String manipulation, Palindrome, Anagram, Pattern Matching, Sliding Window</p>
-          <span class="badge badge-easy">Easy</span>
-          <div class="time-estimate">⏱️ Estimated: 5-6 days</div>
-        </div>
-      </div>
-
-      <div class="roadmap-item">
-        <div class="icon-box">
-          <i class="fas fa-search"></i>
-        </div>
-        <div class="content">
-          <h2>5. Searching Algorithms</h2>
-          <p>Linear Search, Binary Search, Search in Rotated Array, First/Last Position</p>
-          <span class="badge badge-easy">Easy</span>
-          <div class="time-estimate">⏱️ Estimated: 4-5 days</div>
-        </div>
-      </div>
-
-      <div class="roadmap-item">
-        <div class="icon-box">
-          <i class="fas fa-sort"></i>
-        </div>
-        <div class="content">
-          <h2>6. Sorting Algorithms</h2>
-          <p>Bubble Sort, Selection Sort, Insertion Sort, Merge Sort, Quick Sort</p>
-          <span class="badge badge-medium">Medium</span>
-          <div class="time-estimate">⏱️ Estimated: 1 week</div>
-        </div>
-      </div>
-
-      <div class="roadmap-item">
-        <div class="icon-box">
-          <i class="fas fa-hashtag"></i>
-        </div>
-        <div class="content">
-          <h2>7. Hashing</h2>
-          <p>Hash Maps, Hash Sets, Frequency Counting, Two Sum Pattern</p>
-          <span class="badge badge-medium">Medium</span>
-          <div class="time-estimate">⏱️ Estimated: 4-5 days</div>
-        </div>
-      </div>
-
-      <div class="roadmap-item">
-        <div class="icon-box">
-          <i class="fas fa-recycle"></i>
-        </div>
-        <div class="content">
-          <h2>8. Recursion</h2>
-          <p>Base Cases, Recursive Thinking, Fibonacci, Factorial, Tower of Hanoi</p>
-          <span class="badge badge-medium">Medium</span>
-          <div class="time-estimate">⏱️ Estimated: 1 week</div>
-        </div>
-      </div>
-
-      <div class="roadmap-item">
-        <div class="icon-box">
-          <i class="fas fa-layer-group"></i>
-        </div>
-        <div class="content">
-          <h2>9. Stacks & Queues</h2>
-          <p>Stack Operations, Queue, Valid Parentheses, Next Greater Element</p>
-          <span class="badge badge-medium">Medium</span>
-          <div class="time-estimate">⏱️ Estimated: 5-6 days</div>
-        </div>
-      </div>
-
-      <div class="roadmap-item">
-        <div class="icon-box">
-          <i class="fas fa-trophy"></i>
-        </div>
-        <div class="content">
-          <h2>10. Practice & Interview Prep</h2>
-          <p>Solve 50+ Easy problems on LeetCode, Focus on patterns, Mock interviews</p>
-          <span class="badge badge-medium">Medium</span>
-          <div class="time-estimate">⏱️ Estimated: 2 weeks</div>
-        </div>
+    <section class="roadmap-container" id="roadmapStepsContainer">
+      <div style="text-align: center; padding: 2rem">
+        <i class="fas fa-spinner fa-spin fa-2x" style="color: #8b5cf6"></i>
+        <p style="margin-top: 10px; color: #cbd5e1">Loading roadmap steps...</p>
       </div>
     </section>
 
@@ -348,5 +236,50 @@
     </div>
 
     <footer class="footer">🚀 Keep Practicing • Keep Learning • Keep Growing</footer>
+
+    <script>
+      async function loadRoadmap() {
+        try {
+          const res = await fetch('/api/roadmaps');
+          if (!res.ok) throw new Error('Failed to fetch roadmaps');
+          const data = await res.json();
+          const beginner = data.beginner;
+
+          document.getElementById('roadmapTitle').textContent = '🌱 ' + beginner.title;
+          document.getElementById('roadmapDesc').textContent = beginner.description;
+          document.getElementById('roadmapTime').textContent =
+            '📊 Estimated Completion: ' + beginner.estimatedTime;
+
+          const container = document.getElementById('roadmapStepsContainer');
+          if (!container) return;
+
+          container.innerHTML = beginner.steps
+            .map(
+              (step, idx) => `
+            <div class="roadmap-item">
+              <div class="icon-box">
+                <i class="fas ${step.icon}"></i>
+              </div>
+              <div class="content">
+                <h2>${idx + 1}. ${step.title}</h2>
+                <p>${step.desc}</p>
+                <span class="badge badge-${step.difficulty.toLowerCase()}">${step.difficulty}</span>
+                <div class="time-estimate">⏱️ Estimated: ${step.estimatedTime}</div>
+              </div>
+            </div>
+          `
+            )
+            .join('');
+        } catch (err) {
+          console.error('Error loading roadmap:', err);
+          const container = document.getElementById('roadmapStepsContainer');
+          if (container) {
+            container.innerHTML =
+              '<p style="text-align: center; color: #ef4444;">Failed to load roadmap. Please try again later.</p>';
+          }
+        }
+      }
+      document.addEventListener('DOMContentLoaded', loadRoadmap);
+    </script>
   </body>
 </html>

@@ -115,6 +115,7 @@ const DATA_DIR = IS_VERCEL ? path.join('/tmp', 'algo-infinity-verse') : path.joi
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const MEMORY_FILE = path.join(DATA_DIR, 'memory.json');
 const TEAM_PROFILES_FILE = path.join(DATA_DIR, 'team_profiles.json');
+const ROADMAPS_FILE = path.join(DATA_DIR, 'roadmaps.json');
 const AUDITS_FILE = path.join(DATA_DIR, 'audits_history.json');
 const EXECUTIONS_FILE = path.join(DATA_DIR, 'executions.json');
 const CLIENT_ERRORS_FILE = path.join(DATA_DIR, 'client_errors.json');
@@ -2257,6 +2258,16 @@ async function handleApi(req, res, pathname) {
     } catch (error) {
       console.error('Failed to fetch quiz results:', error);
       return sendJson(res, 500, { error: 'Failed to fetch quiz results.' });
+    }
+  }
+
+  if (pathname === '/api/roadmaps' && req.method === 'GET') {
+    try {
+      const data = await fs.readFile(ROADMAPS_FILE, 'utf8');
+      return sendJson(res, 200, JSON.parse(data));
+    } catch (err) {
+      console.error('Failed to load roadmaps registry:', err);
+      return sendJson(res, 500, { error: 'Failed to load roadmaps registry.' });
     }
   }
 
