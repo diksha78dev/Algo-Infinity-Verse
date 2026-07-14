@@ -862,6 +862,13 @@ const visualizers = [
     icon: 'fa-table-cells',
     desc: 'Guaranteed O(1) worst-case lookup via two tables and eviction chains.',
   },
+    {
+    name: 'Rope Data Structure Visualizer',
+    path: '/pages/visualizers/rope-data-structure-visualizer/rope-data-structure-visualizer.html',
+    category: 'Data Structures',
+    icon: 'fa-align-left',
+    desc: 'How VS Code and Google Docs edit huge documents in O(log n) — split, concat, and weight-guided indexing.',
+  },
 
   // ── Special & Creative ──
   {
