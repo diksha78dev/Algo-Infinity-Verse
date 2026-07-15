@@ -2,11 +2,9 @@
 // USER PROGRESS STATE
 // ============================================
 window.userProgress = {
-  name: "Learner",
-  avatar: "🚀",
-  bio: '',
   name: 'Learner',
   avatar: { initial: 'L', bg: '#7c3aed' },
+  bio: '',
   completedProblems: [],
   completedDailyChallenges: [],
   codingPersonality: {
@@ -29,6 +27,10 @@ window.userProgress = {
   freezes: 0,
   freezeHistory: [],
   badges: [],
+  avatarCustomization: {
+    border: 'none',
+    theme: 'default',
+  },
   completedRoadmapSteps: [],
   lastActive: null,
   quizScores: {},
@@ -96,6 +98,9 @@ function updateProfile() {
       userProgress.completedProblems.length >= 50,
       userProgress.completedProblems.length >= 100,
       userProgress.completedProblems.length >= 25 && userProgress.xp >= 2500,
+      (userProgress.battlesWon || 0) >= 1,
+      (userProgress.battlesWon || 0) >= 5,
+      !!(userProgress.inventory?.exclusiveBadge),
     ].filter(Boolean).length;
     profileBadges.textContent = badges;
     const profileBadgesSection = document.getElementById('profileBadgesSection');
@@ -103,18 +108,30 @@ function updateProfile() {
   }
   document
     .querySelectorAll('.avatar-icon')
-    .forEach((el) => renderAvatar(el, userProgress.avatar));
+    .forEach((el) => {
+      if (typeof window.renderProfileAvatar === 'function') {
+        window.renderProfileAvatar(el, userProgress.avatar);
+      } else {
+        renderAvatar(el, userProgress.avatar);
+      }
+    });
 
   function renderAvatar(el, av) {
     if (!el) return;
+    const customization = userProgress.avatarCustomization || { border: 'none', theme: 'default' };
     if (typeof av === 'string' && av.startsWith('data:image')) {
-      el.innerHTML = `<img src="${av}" alt="Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      const borderStyle = window.AVATAR_BORDER_STYLES?.[customization.border] || '';
+      el.innerHTML = `<span style="display:inline-flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;overflow:hidden;${borderStyle ? 'border:' + borderStyle + ';' : ''}"><img src="${av}" alt="Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;"></span>`;
       el.style.fontSize = '0';
       return;
     }
     const initial = (av && av.initial) ? av.initial : 'L';
-    const bg = (av && av.bg) ? av.bg : '#7c3aed';
-    el.innerHTML = `<span style="display:inline-flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;background:${bg};color:#fff;font-size:1.3rem;font-weight:600;font-family:'Poppins',sans-serif;">${initial}</span>`;
+    const themeBg = typeof window.getAvatarThemeBg === 'function' ? window.getAvatarThemeBg(customization.theme, initial) : null;
+    const bg = themeBg || ((av && av.bg) ? av.bg : '#7c3aed');
+    const borderStyle = window.AVATAR_BORDER_STYLES?.[customization.border] || '';
+    const borderCss = borderStyle ? `border:${borderStyle};` : '';
+    const extraClass = customization.border === 'rainbow' ? ' avatar-border-rainbow' : '';
+    el.innerHTML = `<span class="avatar-inner${extraClass}" style="display:inline-flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;background:${bg};color:#fff;font-size:1.3rem;font-weight:600;font-family:'Poppins',sans-serif;${borderCss}">${initial}</span>`;
     el.style.fontSize = '0';
   }
   const profileSectionName = document.getElementById('profileSectionName');
@@ -162,7 +179,7 @@ function updateStreak() {
         userProgress.streak += 1;
         if (userProgress.streak > 0 && userProgress.streak % 7 === 0) {
           userProgress.freezes += 1;
-          showNotification('Milestone reached! You earned a Streak Freeze!', 'success');
+          if (typeof showNotification === 'function') showNotification('Milestone reached! You earned a Streak Freeze!', 'success');
         }
       }
     }
@@ -295,8 +312,6 @@ async function getAuthenticatedSession() {
 window.saveUserData = async function saveUserData() {
   try {
     userProgress.lastActive = new Date().toISOString();
-    if (!Array.isArray(userProgress.bookmarkCollections)) userProgress.bookmarkCollections = [];
-    if (!userProgress.bookmarkCollectionMeta) userProgress.bookmarkCollectionMeta = {};
     if (!Array.isArray(userProgress.bookmarkCollections)) userProgress.bookmarkCollections = [];
     if (!userProgress.bookmarkCollectionMeta) userProgress.bookmarkCollectionMeta = {};
     if (window.StorageDB && window.DB_STORES) {

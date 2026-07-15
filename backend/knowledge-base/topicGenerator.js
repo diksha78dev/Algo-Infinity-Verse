@@ -12,7 +12,13 @@ function slugify(str) {
 }
 
 async function fetchUserSnippets(_topic) {
-  // TODO: integrate with user's notes, submissions, flashcards, etc.
+  // STUB: Personalised snippet integration is not yet implemented.
+  //
+  // This function should query the user's notes, submissions, flashcards,
+  // and mistake logs for the given topic and return structured snippets
+  // that the markdown generator can weave into personalised content.
+  //
+  // Tracking: https://github.com/CodeBreeeze/Algo-Infinity-Verse/issues/new
   return [];
 }
 

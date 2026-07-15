@@ -36,6 +36,7 @@ const resetEmptyBtn = document.getElementById('ppEmptyResetBtn');
 let activeDifficulty = 'all';
 let activeCategory = 'all';
 let searchQuery = '';
+let surpriseProblemId = null;
 const pageReferrer = document.referrer;
 
 /* ─── Build filter chips ─── */
@@ -94,6 +95,11 @@ function getFiltered() {
   const q = searchQuery.toLowerCase().trim();
 
   return problems.filter((p) => {
+    // Surprise Me isolation: only show the selected problem
+    if (surpriseProblemId !== null) {
+      return p.id === surpriseProblemId;
+    }
+
     const matchDiff = activeDifficulty === 'all' || p.difficulty === activeDifficulty;
     const matchCat = activeCategory === 'all' || p.category === activeCategory;
     const matchSearch =
@@ -269,6 +275,99 @@ document.addEventListener('keydown', (e) => {
     searchInput.blur();
   }
 });
+
+/* ─── Surprise Me — Random Unsolved Problem Picker ─── */
+const surpriseBtn = document.getElementById('ppSurpriseBtn');
+const surpriseStatus = document.getElementById('ppSurpriseStatus');
+
+function getLevelAppropriateDifficulties(level) {
+  if (level <= 2) return ['easy'];
+  if (level <= 4) return ['easy', 'medium'];
+  if (level <= 6) return ['medium', 'hard'];
+  return ['easy', 'medium', 'hard'];
+}
+
+function surpriseMe() {
+  const userProgress = window.userProgress || {};
+  const problems = getProblems();
+
+  if (!problems.length) return;
+
+  // Get unsolved problems
+  const unsolved = problems.filter(
+    (p) => !userProgress.completedProblems?.includes(p.id)
+  );
+
+  if (unsolved.length === 0) return;
+
+  // Filter by level-appropriate difficulty
+  const level = userProgress.level || 1;
+  const allowed = getLevelAppropriateDifficulties(level);
+  let candidates = unsolved.filter((p) => allowed.includes(p.difficulty));
+
+  // Fallback to any unsolved if nothing matches
+  if (candidates.length === 0) candidates = unsolved;
+
+  const selected = candidates[Math.floor(Math.random() * candidates.length)];
+
+  // Trigger button animation
+  if (surpriseBtn) {
+    surpriseBtn.classList.add('pp-surprise-rolling');
+    surpriseBtn.querySelector('.pp-surprise-icon')?.classList.add('pp-icon-spin');
+  }
+
+  setTimeout(() => {
+    // Reset animation
+    if (surpriseBtn) {
+      surpriseBtn.classList.remove('pp-surprise-rolling');
+      surpriseBtn.querySelector('.pp-surprise-icon')?.classList.remove('pp-icon-spin');
+    }
+
+    // Isolate the selected card in the grid
+    surpriseProblemId = selected.id;
+
+    render();
+
+    // Announce to screen readers
+    if (surpriseStatus) {
+      surpriseStatus.textContent = `Selected problem: ${selected.title}`;
+    }
+
+    // Scroll to the card and highlight it
+    const observer = new MutationObserver(() => {
+      const card = grid.querySelector(`.pp-card[data-id="${selected.id}"]`);
+      if (!card) return;
+      observer.disconnect();
+
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      document.querySelectorAll('.pp-card.pp-surprise-highlight').forEach((c) => {
+        c.classList.remove('pp-surprise-highlight');
+      });
+      card.classList.add('pp-surprise-highlight');
+
+      // After highlight fades, restore the full grid
+      setTimeout(() => {
+        card.classList.remove('pp-surprise-highlight');
+        surpriseProblemId = null;
+        render();
+      }, 4000);
+    });
+
+    observer.observe(grid, { childList: true, subtree: true });
+    setTimeout(() => {
+      observer.disconnect();
+      if (surpriseProblemId !== null) {
+        surpriseProblemId = null;
+        render();
+      }
+    }, 5000);
+  }, 600);
+}
+
+if (surpriseBtn) {
+  surpriseBtn.addEventListener('click', surpriseMe);
+}
 
 /* ─── Back button ─── */
 document.getElementById('ppBackBtn')?.addEventListener('click', () => {

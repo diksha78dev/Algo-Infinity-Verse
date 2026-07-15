@@ -25,14 +25,24 @@ function saveProfileChanges() {
   document.querySelectorAll('.lang-edit-checkbox').forEach(cb => {
     if (cb.checked) userLangs.push(cb.value);
   });
+
+  const selectedBorder = document.querySelector('input[name="avatarBorder"]:checked');
+  const selectedTheme = document.querySelector('input[name="avatarTheme"]:checked');
+
   const progress = loadProgress();
   progress.name = nameVal;
   progress.languages = userLangs;
+  if (!progress.avatarCustomization) progress.avatarCustomization = { border: 'none', theme: 'default' };
+  if (selectedBorder) progress.avatarCustomization.border = selectedBorder.value;
+  if (selectedTheme) progress.avatarCustomization.theme = selectedTheme.value;
   saveProgress(progress);
   if (typeof window.saveUserData === 'function') window.saveUserData();
   if (typeof window.userProgress !== 'undefined') {
     window.userProgress.name = nameVal;
     window.userProgress.languages = userLangs;
+    if (!window.userProgress.avatarCustomization) window.userProgress.avatarCustomization = { border: 'none', theme: 'default' };
+    if (selectedBorder) window.userProgress.avatarCustomization.border = selectedBorder.value;
+    if (selectedTheme) window.userProgress.avatarCustomization.theme = selectedTheme.value;
   }
   updateProfileViews();
   closeProfileModal();
@@ -96,6 +106,25 @@ function openProfileModal() {
   document.querySelectorAll('.lang-edit-checkbox').forEach(cb => {
     cb.checked = userLangs.includes(cb.value);
   });
+
+  const customization = progress.avatarCustomization || { border: 'none', theme: 'default' };
+  const borderRadio = document.querySelector(`input[name="avatarBorder"][value="${customization.border}"]`);
+  if (borderRadio) borderRadio.checked = true;
+  const themeRadio = document.querySelector(`input[name="avatarTheme"][value="${customization.theme}"]`);
+  if (themeRadio) themeRadio.checked = true;
+
+  const hasPremium = !!(progress.inventory?.avatarPacks?.includes('premium'));
+  document.querySelectorAll('.border-premium, .theme-premium').forEach(el => {
+    const radio = el.querySelector('input[type="radio"]');
+    if (hasPremium) {
+      el.style.opacity = '1';
+      if (radio) radio.disabled = false;
+    } else {
+      el.style.opacity = '0.6';
+      if (radio) radio.disabled = true;
+    }
+  });
+
   if (modal) modal.classList.add('active');
 }
 

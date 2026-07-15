@@ -62,6 +62,7 @@ const upload = multer({
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = __dirname;
+const PAGE_404 = path.join(ROOT, '..', '404.html');
 const DATA_DIR = path.join(ROOT, 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const MEMORY_FILE = path.join(DATA_DIR, 'memory.json');
@@ -554,8 +555,14 @@ async function serveStatic(req, res, pathname) {
     });
     res.end(content);
   } catch {
-    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-    res.end('Not found');
+    try {
+      const errorContent = await fs.readFile(PAGE_404, 'utf8');
+      res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(errorContent);
+    } catch {
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('Not found');
+    }
   }
 }
 

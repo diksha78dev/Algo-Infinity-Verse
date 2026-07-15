@@ -148,14 +148,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (profileAvatarEmoji) {
                 profileAvatarEmoji.style.display = 'none';
             }
-        } else if (profileAvatarEmoji && typeof window.renderAvatarElement === 'function') {
-            // Hide the <img> tag if no uploaded image
+        } else if (profileAvatarEmoji && typeof window.renderProfileAvatar === 'function') {
             if (profileAvatarImage) profileAvatarImage.style.display = 'none';
-            // Use initial-based colored circle
             const av = userProgress.avatar || (typeof window.getInitialAvatar === 'function' ? window.getInitialAvatar(userProgress.name) : { initial: (userProgress.name || 'L').charAt(0).toUpperCase(), bg: '#7c3aed' });
             profileAvatarEmoji.style.display = '';
             profileAvatarEmoji.innerHTML = '';
-            window.renderAvatarElement(profileAvatarEmoji, av, 80);
+            window.renderProfileAvatar(profileAvatarEmoji, av);
         }
         
         // Map completed IDs to actual problem objects
@@ -373,7 +371,9 @@ document.addEventListener('DOMContentLoaded', () => {
             cardAvatar.textContent = '';
             cardAvatar.style.fontSize = '0';
             const rawAv = userProgress.avatar;
+            const customization = userProgress.avatarCustomization || { border: 'none', theme: 'default' };
             if (rawAv && typeof rawAv === 'string' && rawAv.startsWith('data:image')) {
+                const borderStyle = window.AVATAR_BORDER_STYLES?.[customization.border] || '';
                 const img = document.createElement('img');
                 img.src = rawAv;
                 img.alt = 'Avatar';
@@ -382,13 +382,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 img.style.objectFit = 'cover';
                 img.style.borderRadius = '50%';
                 cardAvatar.appendChild(img);
+                if (borderStyle) cardAvatar.style.border = borderStyle;
             } else {
                 const av = (rawAv && typeof rawAv === 'object') ? rawAv : { initial: (userProgress.name || 'L').charAt(0).toUpperCase(), bg: '#7c3aed' };
                 const initial = av.initial || 'L';
-                const bg = av.bg || '#7c3aed';
+                const themeBg = typeof window.getAvatarThemeBg === 'function' ? window.getAvatarThemeBg(customization.theme, initial) : null;
+                const bg = themeBg || av.bg || '#7c3aed';
+                const borderStyle = window.AVATAR_BORDER_STYLES?.[customization.border] || '';
                 const span = document.createElement('span');
                 span.textContent = initial;
-                span.style.cssText = `display:inline-flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;background:${bg};color:#fff;font-size:1.8rem;font-weight:600;font-family:'Poppins',sans-serif;`;
+                const borderCss = borderStyle ? `border:${borderStyle};` : '';
+                span.style.cssText = `display:inline-flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;background:${bg};color:#fff;font-size:1.8rem;font-weight:600;font-family:'Poppins',sans-serif;${borderCss}`;
+                if (customization.border === 'rainbow') span.className = 'avatar-border-rainbow';
                 cardAvatar.style.fontSize = '0';
                 cardAvatar.appendChild(span);
             }

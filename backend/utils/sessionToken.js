@@ -86,7 +86,11 @@ export function getSession(req) {
 }
 
 export function sessionCookie(token, req) {
-  const secure = req.headers['x-forwarded-proto'] === 'https';
+  // Don't rely solely on x-forwarded-proto: some deploy targets' proxies
+  // don't forward it, which would leave session cookies without Secure over
+  // HTTPS. Always require it in production regardless of that header (#2358).
+  const secure =
+    process.env.NODE_ENV === 'production' || req.headers['x-forwarded-proto'] === 'https';
   return [
     `${SESSION_COOKIE}=${encodeURIComponent(token)}`,
     'HttpOnly',

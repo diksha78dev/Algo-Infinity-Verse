@@ -35,7 +35,6 @@
     <link rel="shortcut icon" href="/images/icon-192x192.svg" />
     <meta name="theme-color" content="#38bdf8" />
     <link rel="stylesheet" href="styles.css" />
-    <link rel="stylesheet" href="pages/learning/rust-learning.css" />
     <link
       href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&amp;family=Poppins:wght@300;400;500;600;700&amp;family=Fira+Code:wght@400;500;600&amp;display=swap"
       rel="stylesheet"
@@ -511,9 +510,6 @@
       <!-- DSA Flashcards Revision Section -->
       <div id="flashcards-placeholder"></div>
 
-      <!-- Rust Playground Section -->
-      <div id="rust-playground-placeholder"></div>
-
       <!-- Quiz Section -->
       <div id="quiz-placeholder"></div>
 
@@ -966,6 +962,9 @@
       <!-- Change Password Modal -->
       <div id="change-password-modal-placeholder"></div>
 
+      <!-- XP Store Modal -->
+      <div id="xp-store-placeholder"></div>
+
       <!-- Study Timer Section -->
       <div id="study-timer-placeholder"></div>
     </main>
@@ -1068,7 +1067,6 @@
           loadPartial('hero-placeholder', '/partials/hero.html'),
           loadPartial('topic-of-the-day-placeholder', '/partials/topic-of-the-day.html'),
           loadPartial('flashcards-placeholder', '/partials/flashcards.html'),
-          loadPartial('rust-playground-placeholder', '/partials/rust-playground.html'),
           loadPartial('quiz-placeholder', '/partials/quiz.html'),
           loadPartial('did-you-know-placeholder', '/partials/did-you-know.html'),
           loadPartial('game-modal-placeholder', '/partials/game-modal.html'),
@@ -1082,6 +1080,7 @@
           loadPartial('change-password-modal-placeholder', '/partials/change-password-modal.html'),
           loadPartial('study-timer-placeholder', '/partials/study-timer.html'),
           loadPartial('footer-placeholder', '/partials/footer.html'),
+          loadPartial('xp-store-placeholder', '/partials/xp-store-modal.html'),
         ];
         await Promise.all(partials);
         window.partialsLoadedFlag = true;

@@ -67,6 +67,7 @@ function updateDashboard() {
   if (typeof renderActivityHeatmap === 'function') renderActivityHeatmap();
   if (typeof updateFreezeHistoryList === 'function') updateFreezeHistoryList();
   updateBadges();
+  if (typeof renderInventoryDisplay === 'function') renderInventoryDisplay();
   updateRecentProblems();
   updateRecommendations();
   updateLeaderboard();
@@ -345,9 +346,20 @@ function updateBadges() {
       criteria: 'Win 5 battles',
       earned: (userProgress.battlesWon || 0) >= 5,
     },
+    {
+      id: 9,
+      icon: '<i class="fas fa-gem" style="font-size:1.1rem"></i>',
+      name: 'Exclusive',
+      description: 'A mark of true dedication',
+      criteria: 'Purchased from the XP Store',
+      earned: !!(userProgress.inventory?.exclusiveBadge),
+    },
   ];
 
   const earned = badges.filter((b) => b.earned).map((b) => b.id);
+
+  // No need to manually preserve badge 9 — it's now in the badges array
+
   if (JSON.stringify(earned) !== JSON.stringify(userProgress.badges)) {
     userProgress.badges = earned;
     if (typeof saveUserData === 'function') saveUserData();
@@ -355,33 +367,35 @@ function updateBadges() {
 
   if (container) {
     container.innerHTML = badges
-      .map(
-        (badge) =>
-          `<div class="badge ${badge.earned ? '' : 'locked'}" tabindex="0">
-                <span class="badge-tooltip">
+      .map((badge) => {
+        const tooltipId = `badge-tooltip-${badge.id}`;
+        const lockedLabel = badge.earned ? '' : ' (locked)';
+        return `<div class="badge ${badge.earned ? '' : 'locked'}" tabindex="0" aria-describedby="${tooltipId}" aria-label="${badge.name}${lockedLabel}">
+                <span class="badge-tooltip" id="${tooltipId}" role="tooltip">
                     <strong>${badge.name}</strong>
                     <span>${badge.description}</span>
                     <span>${badge.criteria}</span>
                 </span>
                 ${badge.icon}
-            </div>`
-      )
+            </div>`;
+      })
       .join('');
   }
 
   if (grid) {
     grid.innerHTML = badges
-      .map(
-        (badge) =>
-          `<div class="badge-lg ${badge.earned ? '' : 'locked'}" tabindex="0">
-                <span class="badge-tooltip">
+      .map((badge) => {
+        const tooltipId = `badge-lg-tooltip-${badge.id}`;
+        const lockedLabel = badge.earned ? '' : ' (locked)';
+        return `<div class="badge-lg ${badge.earned ? '' : 'locked'}" tabindex="0" aria-describedby="${tooltipId}" aria-label="${badge.name}${lockedLabel}">
+                <span class="badge-tooltip" id="${tooltipId}" role="tooltip">
                     <strong>${badge.name}</strong>
                     <span>${badge.description}</span>
                     <span>${badge.criteria}</span>
                 </span>
                 ${badge.icon}
-            </div>`
-      )
+            </div>`;
+      })
       .join('');
   }
 }

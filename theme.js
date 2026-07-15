@@ -5,6 +5,54 @@
   let themeObserver = null;
   let isInitialized = false;
   const SCROLL_THRESHOLD = 100;
+  /* ── Scroll-direction auto-hide constants ── */
+  const HIDE_THRESHOLD = 120;       /* distance from top below which hiding is active */
+  const HIDE_TOLERANCE = 15;        /* minimum delta to detect direction (avoids flicker) */
+  let lastScrollY = window.scrollY;
+  let mobileMenuOpen = false;       /* prevent hide while mobile nav is open */
+  let menuObserver = null;          /* MutationObserver for mobile menu state */
+  let menuReadyObserver = null;     /* MutationObserver waiting for #navLinks to appear */
+
+  /**
+   * Attach a MutationObserver to the #navLinks element to keep
+   * mobileMenuOpen in sync, even when the menu is closed programmatically
+   * (e.g., tapping a nav-link, clicking the overlay, pressing Escape).
+   */
+  function attachMobileMenuObserver() {
+    const navLinks = document.getElementById('navLinks');
+    if (!navLinks) return;
+    menuObserver = new MutationObserver(function () {
+      mobileMenuOpen = navLinks.classList.contains('active');
+    });
+    menuObserver.observe(navLinks, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  /**
+   * Watch the body for #navLinks to appear (supports dynamic partial loading).
+   * Falls back gracefully if the element is already present.
+   */
+  function watchMobileMenu() {
+    const navLinks = document.getElementById('navLinks');
+    if (navLinks) {
+      attachMobileMenuObserver();
+      return;
+    }
+    /* #navLinks isn't in the DOM yet — wait for it via body observer */
+    menuReadyObserver = new MutationObserver(function () {
+      if (document.getElementById('navLinks')) {
+        menuReadyObserver.disconnect();
+        menuReadyObserver = null;
+        attachMobileMenuObserver();
+      }
+    });
+    menuReadyObserver.observe(document.body, { childList: true, subtree: true });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', watchMobileMenu);
+  } else {
+    watchMobileMenu();
+  }
 
   function getNavbar() {
     if (!cachedNavbar) {
@@ -51,6 +99,39 @@
         : 'rgba(10, 10, 26, 0.65)';
       navbar.style.backdropFilter = 'blur(24px)';
       navbar.style.boxShadow = 'none';
+    }
+
+    /* ── Scroll-direction auto-hide ── */
+    syncNavbarVisibility(navbar);
+  }
+
+  /**
+   * Toggles .navbar-hidden based on scroll direction.
+   * - Hide when scrolling down past HIDE_THRESHOLD
+   * - Show when scrolling up or within HIDE_THRESHOLD from top
+   * - Never hide if the mobile menu is open
+   */
+  function syncNavbarVisibility(navbar) {
+    const currentScrollY = window.scrollY;
+    const delta = currentScrollY - lastScrollY;
+    const isAtTop = currentScrollY <= HIDE_THRESHOLD;
+
+    if (isAtTop) {
+      /* Always visible at the top */
+      navbar.classList.remove('navbar-hidden');
+      lastScrollY = currentScrollY;
+    } else if (Math.abs(delta) > HIDE_TOLERANCE) {
+      /* Determine direction — only act when delta exceeds tolerance */
+      if (!mobileMenuOpen) {
+        if (delta > 0) {
+          /* Scrolled down — hide navbar */
+          navbar.classList.add('navbar-hidden');
+        } else {
+          /* Scrolled up — reveal navbar */
+          navbar.classList.remove('navbar-hidden');
+        }
+      }
+      lastScrollY = currentScrollY;
     }
   }
 
@@ -195,6 +276,14 @@
     if (themeObserver) {
       themeObserver.disconnect();
       themeObserver = null;
+    }
+    if (menuObserver) {
+      menuObserver.disconnect();
+      menuObserver = null;
+    }
+    if (menuReadyObserver) {
+      menuReadyObserver.disconnect();
+      menuReadyObserver = null;
     }
 
     const toggles = document.querySelectorAll('[data-theme-toggle], #darkModeToggle');

@@ -78,6 +78,7 @@ body[data-page="profile"] .back-btn:focus-visible {
 
 /* ----- PROFILE HERO ----- */
 body[data-page="profile"] .profile-hero {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 2rem;
@@ -246,6 +247,9 @@ body[data-page="profile"] .profile-stat .stat-label {
 
 /* ----- EDIT BUTTON ----- */
 body[data-page="profile"] .profile-edit-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
   width: 32px;
   height: 32px;
   border-radius: var(--pf-radius);
@@ -258,7 +262,6 @@ body[data-page="profile"] .profile-edit-btn {
   justify-content: center;
   font-size: 0.75rem;
   flex-shrink: 0;
-  margin-top: 0.25rem;
 }
 
 body[data-page="profile"] .profile-edit-btn:hover {

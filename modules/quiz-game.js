@@ -1,3 +1,5 @@
+import { shuffle, calculatePercentage, calculateXp, updateQuizRecord } from './quizScoring.js';
+
 let currentQuiz = null;
 let lastQuizReview = null;
 let lastQuizResultData = null;
@@ -5,13 +7,12 @@ let quizStartTime = null;
 let quizTimerInterval = null;
 
 function shuffleArray(array) {
-  for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; }
-  return array;
+  return shuffle(array);
 }
 
 function getQuizTopicKey(topic) {
   const normalize = s => String(s).trim().toLowerCase().replace(/\s+/g, " ");
-  const map = { arrays: "arrays", strings: "strings", "linked list": "linkedlist", linkedlist: "linkedlist", trees: "trees", graphs: "graphs", "dynamic programming": "dp", dp: "dp" };
+  const map = { arrays: "arrays", strings: "strings", "linked list": "linkedlist", linkedlist: "linkedlist", trees: "trees", graphs: "graphs", "dynamic programming": "dp", dp: "dp", heaps: "heaps" };
   if (typeof topic === "string") return map[normalize(topic)] || null;
   const name = normalize(topic.name);
   return map[name] || null;
@@ -121,6 +122,75 @@ function closeQuizModal() {
   currentQuiz = null;
 }
 
+function getQuizLiveRegion() {
+  let liveRegion = document.getElementById("topicQuizLiveRegion");
+  if (!liveRegion) {
+    liveRegion = document.createElement("div");
+    liveRegion.id = "topicQuizLiveRegion";
+    liveRegion.className = "sr-only";
+    liveRegion.setAttribute("role", "status");
+    liveRegion.setAttribute("aria-live", "polite");
+    document.body.appendChild(liveRegion);
+  }
+  return liveRegion;
+}
+
+function announceQuizStatus(message) {
+  const liveRegion = getQuizLiveRegion();
+  liveRegion.textContent = "";
+  // Force a reflow so repeated identical messages are still announced.
+  void liveRegion.offsetWidth;
+  liveRegion.textContent = message;
+}
+
+function focusQuizOption(optionsEl, index) {
+  const options = optionsEl.querySelectorAll(".quiz-option");
+  const target = options[index];
+  if (target) target.focus();
+}
+
+/**
+ * Pure helper: given a keyboard key, the currently focused option index,
+ * and the total number of options, returns the index that should receive
+ * focus next (or null when the key does not move focus).
+ * Exported for unit testing.
+ */
+function getNextOptionIndex(key, currentIndex, total) {
+  if (total <= 0) return null;
+  switch (key) {
+    case "ArrowDown":
+    case "ArrowRight":
+      return (currentIndex + 1) % total;
+    case "ArrowUp":
+    case "ArrowLeft":
+      return (currentIndex - 1 + total) % total;
+    case "Home":
+      return 0;
+    case "End":
+      return total - 1;
+    default:
+      return null;
+  }
+}
+
+function handleQuizOptionKeydown(e, optionsEl) {
+  const options = Array.from(optionsEl.querySelectorAll(".quiz-option"));
+  const currentIndex = options.indexOf(e.currentTarget);
+  if (currentIndex === -1) return;
+
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault();
+    selectQuizAnswer(parseInt(e.currentTarget.dataset.index));
+    return;
+  }
+
+  const nextIndex = getNextOptionIndex(e.key, currentIndex, options.length);
+  if (nextIndex !== null) {
+    e.preventDefault();
+    focusQuizOption(optionsEl, nextIndex);
+  }
+}
+
 function renderQuizQuestion() {
   if (!currentQuiz || currentQuiz.currentQuestionIndex >= currentQuiz.questions.length) { finishQuiz(); return; }
   const question = currentQuiz.questions[currentQuiz.currentQuestionIndex];
@@ -128,12 +198,35 @@ function renderQuizQuestion() {
   const optionsEl = document.getElementById("topicQuizOptions");
   const progressEl = document.getElementById("topicQuizProgress");
   const counterEl = document.getElementById("topicQuizCounter");
-  if (questionEl) questionEl.textContent = `Q${currentQuiz.currentQuestionIndex + 1}: ${question.question}`;
-  if (counterEl) counterEl.textContent = `${currentQuiz.currentQuestionIndex + 1} / ${currentQuiz.questions.length}`;
-  if (progressEl) progressEl.style.width = `${((currentQuiz.currentQuestionIndex + 1) / currentQuiz.questions.length) * 100}%`;
+  const questionNumber = currentQuiz.currentQuestionIndex + 1;
+  const totalQuestions = currentQuiz.questions.length;
+  if (questionEl) {
+    questionEl.textContent = `Q${questionNumber}: ${question.question}`;
+    questionEl.id = questionEl.id || "topicQuizQuestionText";
+  }
+  if (counterEl) counterEl.textContent = `${questionNumber} / ${totalQuestions}`;
+  if (progressEl) {
+    progressEl.style.width = `${(questionNumber / totalQuestions) * 100}%`;
+    progressEl.setAttribute("role", "progressbar");
+    progressEl.setAttribute("aria-valuemin", "0");
+    progressEl.setAttribute("aria-valuemax", "100");
+    progressEl.setAttribute("aria-valuenow", String(Math.round((questionNumber / totalQuestions) * 100)));
+    progressEl.setAttribute("aria-label", `Question ${questionNumber} of ${totalQuestions}`);
+  }
   if (optionsEl) {
-    optionsEl.innerHTML = question.options.map((option, idx) => `<div class="quiz-option" data-index="${idx}"><span class="option-letter">${String.fromCharCode(65 + idx)}</span><span class="option-text">${option}</span></div>`).join("");
-    optionsEl.querySelectorAll(".quiz-option").forEach(opt => opt.addEventListener("click", () => selectQuizAnswer(parseInt(opt.dataset.index))));
+    optionsEl.setAttribute("role", "radiogroup");
+    if (questionEl) optionsEl.setAttribute("aria-labelledby", questionEl.id);
+    optionsEl.innerHTML = question.options
+      .map(
+        (option, idx) =>
+          `<div class="quiz-option" data-index="${idx}" role="radio" aria-checked="false" tabindex="${idx === 0 ? "0" : "-1"}"><span class="option-letter">${String.fromCharCode(65 + idx)}</span><span class="option-text">${option}</span></div>`
+      )
+      .join("");
+    optionsEl.querySelectorAll(".quiz-option").forEach((opt) => {
+      opt.addEventListener("click", () => selectQuizAnswer(parseInt(opt.dataset.index)));
+      opt.addEventListener("keydown", (e) => handleQuizOptionKeydown(e, optionsEl));
+    });
+    announceQuizStatus(`Question ${questionNumber} of ${totalQuestions}: ${question.question}`);
   }
 }
 
@@ -152,10 +245,13 @@ function selectQuizAnswer(selectedIndex) {
   if (!optionsEl) return;
   optionsEl.querySelectorAll(".quiz-option").forEach((opt, idx) => {
     opt.classList.add("selected");
+    opt.setAttribute("tabindex", "-1");
+    opt.setAttribute("aria-checked", idx === selectedIndex ? "true" : "false");
     if (idx === question.correct) opt.classList.add("correct");
     else if (idx === selectedIndex && !isCorrect) opt.classList.add("incorrect");
     opt.style.pointerEvents = "none";
   });
+  announceQuizStatus(isCorrect ? "Correct answer!" : `Incorrect. The correct answer is ${question.options[question.correct]}.`);
   setTimeout(() => { currentQuiz.currentQuestionIndex++; renderQuizQuestion(); }, 1200);
 }
 
@@ -164,16 +260,14 @@ function finishQuiz() {
   const topicKey = currentQuiz.topic;
   const score = currentQuiz.score;
   const total = currentQuiz.questions.length;
-  const percentage = Math.round((score / total) * 100);
+  const percentage = calculatePercentage(score, total);
   const completionTime = stopQuizTimer();
   if (!userProgress.quizScores[topicKey]) userProgress.quizScores[topicKey] = { bestScore: 0, attempts: 0, totalXP: 0 };
-  const record = userProgress.quizScores[topicKey];
   if (!userProgress.bestQuizTimes[topicKey] || completionTime < userProgress.bestQuizTimes[topicKey]) userProgress.bestQuizTimes[topicKey] = completionTime;
-  record.attempts++;
-  if (percentage > record.bestScore) record.bestScore = percentage;
-  const xpEarned = Math.round(score * 10);
+  const xpEarned = calculateXp(score);
+  userProgress.quizScores[topicKey] = updateQuizRecord(userProgress.quizScores[topicKey], { percentage, xpEarned });
+  const record = userProgress.quizScores[topicKey];
   if (typeof addXP === 'function') addXP(xpEarned);
-  record.totalXP += xpEarned;
   if (typeof recordAnalyticsEvent === 'function') recordAnalyticsEvent("quiz", { topicKey, score, total, percentage, xpEarned, completionTime });
   if (typeof recordDailyActivity === 'function') recordDailyActivity(1);
   if (typeof handleQuizCompletionForRevision === 'function') handleQuizCompletionForRevision(topicKey, percentage);
@@ -241,9 +335,11 @@ function restoreQuizResults() {
   showQuizResults(lastQuizResultData.score, lastQuizResultData.total, lastQuizResultData.percentage, lastQuizResultData.xpEarned, lastQuizResultData.completionTime);
 }
 
-window.showQuizReview = showQuizReview;
-window.restoreQuizResults = restoreQuizResults;
-window.closeQuizModal = closeQuizModal;
-window.startQuiz = startQuiz;
+if (typeof window !== 'undefined') {
+  window.showQuizReview = showQuizReview;
+  window.restoreQuizResults = restoreQuizResults;
+  window.closeQuizModal = closeQuizModal;
+  window.startQuiz = startQuiz;
+}
 
-export { initQuizSection, closeQuizModal, startQuiz, shuffleArray, formatQuizTime };
+export { initQuizSection, closeQuizModal, startQuiz, shuffleArray, formatQuizTime, getNextOptionIndex };

@@ -13,7 +13,7 @@ export class RevisionEngine {
    *
    * @param {Object} currentSchedule - { currentStage, history }
    * @param {Object} options - { scorePercentage, isIncorrect, isSkip, difficulty }
-   * @param {Object} config - { passThreshold, perfectThreshold, markCompleteAfterLast, maxStages }
+   * @param {Object} config - { passThreshold, markCompleteAfterLast, maxStages }
    * @returns {Object} { nextStage, intervalDays, nextReviewDate, isComplete, message }
    */
   calculateNext(currentSchedule = {}, options = {}, config = {}) {
@@ -27,7 +27,6 @@ export class RevisionEngine {
 
     //  Configuration with defaults
     const passThreshold = config?.passThreshold || 60;
-    const perfectThreshold = config?.perfectThreshold || 90;
     const markCompleteAfterLast = config?.markCompleteAfterLast !== false;
     const maxStages = config?.maxStages || this.intervals.length;
 
@@ -90,30 +89,8 @@ export class RevisionEngine {
       }
     }
 
-    //  PERFECT SCORE: Fast track - skip ahead!
-    if (scorePercentage >= perfectThreshold) {
-      const skipAhead = Math.floor((scorePercentage - perfectThreshold) / 10) + 1;
-      const nextStage = Math.min(stage + skipAhead, maxStages - 1);
-      const baseInterval = this.intervals[nextStage] || 1;
-
-      const nextDate = new Date();
-      nextDate.setDate(nextDate.getDate() + baseInterval);
-
-      const isComplete = nextStage >= maxStages - 1 && markCompleteAfterLast;
-
-      return {
-        nextStage: nextStage,
-        intervalDays: baseInterval,
-        nextReviewDate: nextDate.toISOString(),
-        isComplete: isComplete,
-        message: isComplete
-          ? " Perfect score! You've completed all stages!"
-          : ` Excellent! Skipping to stage ${nextStage + 1} (skipped ${skipAhead} stages)`,
-        skippedStages: nextStage - stage - 1,
-      };
-    }
-
-    //  Normal progression: Move to next stage
+    //  Normal progression: Move to next stage (perfect scores use the same
+    //  single-step progression below, boosted by the 1.5x score multiplier)
     const nextStage = Math.min(stage + 1, maxStages - 1);
     let baseInterval = this.intervals[nextStage] || 1;
 

@@ -54,6 +54,13 @@ const visualizers = [
     desc: 'Visualize time complexity growth rates across different algorithms.',
   },
   {
+    name: 'Algorithmic Complexity Sandbox',
+    path: '/pages/visualizers/complexity-analyzer/index.html',
+    category: 'Sorting & Searching',
+    icon: 'fa-gauge-high',
+    desc: 'Profile and compare execution runtimes and memory curves for two custom solutions side by side.',
+  },
+  {
     name: 'Binary Search Visualizer',
     path: '/pages/learning/binary-search/binary-search.html',
     category: 'Sorting & Searching',
@@ -166,6 +173,13 @@ const visualizers = [
     category: 'Trees & BSTs',
     icon: 'fa-book',
     desc: 'Visualize binomial heap merge and extract-min operations.',
+  },
+  {
+  name: 'Interval Tree Visualizer',
+  path: '/pages/visualizers/interval-tree/interval-tree.html',
+  category: 'Data Structures',
+  icon: 'fa-ruler-horizontal',
+  desc: 'Augmented BST storing intervals — max-endpoint pruning, overlap queries, and calendar conflict detection in O(log n + k).',
   },
 
   // ── Graph Algorithms ──
@@ -424,6 +438,13 @@ const visualizers = [
     category: 'Systems & OS',
     icon: 'fa-code-branch',
     desc: 'Visualize Git internals: commits, branches, merges, and the DAG commit graph.',
+  },
+  {
+    name: 'External Merge Sort Visualizer',
+    path: '/pages/visualizers/external-merge-sort-visualizer/external-merge-sort-visualizer.html',
+    category: 'Systems & OS',
+    icon: 'fa-hard-drive',
+    desc: 'Sort data larger than memory — run generation, k-way merge, and disk I/O cost tracking.',
   },
   {
     name: 'ARIES Recovery Simulator',
@@ -1026,21 +1047,39 @@ const visualizers = [
     category: 'Systems & OS',
     icon: 'fa-globe',
     desc: 'Interactive simulator tracing recursive DNS queries.',
+  },
+  {
     name: 'Consistent Hashing Visualizer',
     path: '/pages/visualizers/consistent-hashing-simulator/consistent-hashing-simulator.html',
     category: 'Systems & OS',
     icon: 'fa-server',
     desc: 'Interactive hash ring showing node distribution and key routing.',
+  },
+  {
     name: 'gRPC & HTTP/2 Multiplexing Visualizer',
     path: '/pages/visualizers/grpc-simulator/grpc-simulator.html',
     category: 'Architecture',
     icon: 'fa-network-wired',
     desc: 'Compare HTTP/1.1 REST to HTTP/2 multiplexed streams and Protocol Buffers.',
+  },
+  {
     name: 'WebRTC Signaling & ICE Simulator',
     path: '/pages/visualizers/webrtc-simulator/webrtc-simulator.html',
     category: 'Systems & OS',
     icon: 'fa-tower-broadcast',
     desc: 'Visualize Peer-to-Peer connections, STUN hole-punching, and TURN relays.',
+  },
+  {
+    name: 'WebAssembly Memory & Interop Visualizer',
+    path: '/pages/visualizers/wasm-memory-simulator/wasm-memory-simulator.html',
+    category: 'Systems & OS',
+    icon: 'fa-memory',
+    desc: 'Understand WebAssembly linear memory and how it exchanges data with JavaScript.',
+    name: 'Snowflake Distributed ID Visualizer',
+    path: '/pages/visualizers/snowflake-id-visualizer/snowflake-id-visualizer.html',
+    category: 'Architecture',
+    icon: 'fa-bolt',
+    desc: 'Generate highly-scalable 64-bit unique identifiers using timestamps and machine IDs.',
   },
 ];
 

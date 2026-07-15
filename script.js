@@ -1746,6 +1746,17 @@ let userProgress = {
   streak: 0,
   freezes: 0,
   freezeHistory: [],
+  inventory: {
+    streakFreezes: 0,
+    hintTokens: 0,
+    xpBoosters: 0,
+    exclusiveBadge: false,
+    avatarPacks: [],
+  },
+  avatarCustomization: {
+    border: 'none',
+    theme: 'default',
+  },
   badges: [],
   completedRoadmapSteps: [],
   lastActive: null,
@@ -1785,6 +1796,17 @@ if (localStorage.getItem('algoInfinityVerse')) {
       if (!userProgress.dailyGoals) userProgress.dailyGoals = {};
       if (!userProgress.spacedRepetition) userProgress.spacedRepetition = {};
       if (userProgress.reviewStreak === undefined) userProgress.reviewStreak = 0;
+      if (!userProgress.inventory) userProgress.inventory = {
+        streakFreezes: 0,
+        hintTokens: 0,
+        xpBoosters: 0,
+        exclusiveBadge: false,
+        avatarPacks: [],
+      };
+      if (!userProgress.avatarCustomization) userProgress.avatarCustomization = {
+        border: 'none',
+        theme: 'default',
+      };
 
       if (loaded.quizScores)
         userProgress.quizScores = { ...(userProgress.quizScores || {}), ...loaded.quizScores };
@@ -3648,6 +3670,30 @@ function updateBadges() {
       description: 'Hit the target with consistency',
       criteria: 'Solve 25 problems and earn 2,500 XP',
       earned: userProgress.completedProblems.length >= 25 && userProgress.xp >= 2500,
+    },
+    {
+      id: 7,
+      icon: '⚔️',
+      name: 'Gladiator',
+      description: 'Win your first coding battle',
+      criteria: 'Win 1 battle',
+      earned: (userProgress.battlesWon || 0) >= 1,
+    },
+    {
+      id: 8,
+      icon: '⚡',
+      name: 'Speed Demon',
+      description: 'Become a battle master',
+      criteria: 'Win 5 battles',
+      earned: (userProgress.battlesWon || 0) >= 5,
+    },
+    {
+      id: 9,
+      icon: '<i class="fas fa-gem" style="font-size:1.1rem"></i>',
+      name: 'Exclusive',
+      description: 'A mark of true dedication',
+      criteria: 'Purchased from the XP Store',
+      earned: !!(userProgress.inventory?.exclusiveBadge),
     },
   ];
   const earned = badges.filter((b) => b.earned).map((b) => b.id);
@@ -6219,3 +6265,26 @@ function updateProblemCount(filteredProblems) {
     countElement.textContent = `${total} problem${total !== 1 ? 's' : ''}`;
   }
 }
+
+// ============================================
+// BREADCRUMB SETUP
+// ============================================
+// Ensure the breadcrumb DOM element exists on every page so the
+// NavigationManager can attach to it — even on pages that don't load
+// the navbar partial (where the element normally lives).
+(function () {
+  if (!document.getElementById('dynamic-breadcrumbs')) {
+    const div = document.createElement('div');
+    div.id = 'dynamic-breadcrumbs';
+    div.className = 'breadcrumb-bar';
+    document.body.appendChild(div);
+  }
+
+  // Load navigationManager if not already present
+  if (!window.navManager) {
+    const s = document.createElement('script');
+    s.src = '/utils/navigationManager.js';
+    s.defer = true;
+    document.head.appendChild(s);
+  }
+})();

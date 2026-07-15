@@ -8,6 +8,7 @@ import express from 'express';
 import apiRouter from './backend/routes/api.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { spawn } from 'child_process';
 import { FieldValue } from 'firebase-admin/firestore';
 import { initializeFirebase, COLLECTIONS } from './firebase.js';
 import { verifyCsrfToken } from './utils/csrf-verify.js';
@@ -70,7 +71,7 @@ import {
   getBattle,
   getHistory,
   TEST_CASES,
-  runTestCases,
+  runDetailedTestCases,
 } from './pages/Dsa-Battle/Battleservice.js';
 
 // import { instrumentJS } from './modules/code-tracer.js';
@@ -110,6 +111,7 @@ let userCacheDirty = true;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = __dirname;
+const PAGE_404 = path.join(ROOT, '404.html');
 const IS_VERCEL = process.env.VERCEL === '1';
 const DATA_DIR = IS_VERCEL ? path.join('/tmp', 'algo-infinity-verse') : path.join(ROOT, 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
@@ -206,7 +208,11 @@ function getRefreshToken(req) {
 // Previously this set only the access cookie, so the aiv_refresh cookie was
 // never issued and silent token refresh could never succeed (#1225).
 function authCookies(accessToken, refreshToken, req) {
-  const secure = req.headers['x-forwarded-proto'] === 'https';
+  // Don't rely solely on x-forwarded-proto: some deploy targets' proxies
+  // don't forward it, which would leave session cookies without Secure over
+  // HTTPS. Always require it in production regardless of that header (#2358).
+  const secure =
+    process.env.NODE_ENV === 'production' || req.headers['x-forwarded-proto'] === 'https';
   const cookie = (name, value, maxAge) =>
     [
       `${name}=${encodeURIComponent(value)}`,
@@ -3031,6 +3037,227 @@ async function handleApi(req, res, pathname) {
     }
   }
 
+  // Helper function to run javascript in child process securely for complexity profiling
+  function runInChild(code, N) {
+    return new Promise((resolve) => {
+      // Spawn node with 16MB heap memory limit and read from stdin (-)
+      const child = spawn(process.execPath, ['--max-old-space-size=16', '-'], {
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+
+      const runnerScript = `
+        const vm = require('vm');
+        const code = ${JSON.stringify(code)};
+        const N = ${N};
+        
+        const sandbox = {
+          console: { log: () => {}, error: () => {} },
+          Math, Array, Object, String, Number, Boolean, Date, Set, Map, N
+        };
+        
+        try {
+          const memStart = process.memoryUsage().heapUsed;
+          const timeStart = performance.now();
+          
+          const scriptContent = code + '\\n' + 'solve(N);';
+          
+          vm.runInNewContext(scriptContent, sandbox, { timeout: 150 });
+          
+          const timeEnd = performance.now();
+          const memEnd = process.memoryUsage().heapUsed;
+          
+          const timeMs = timeEnd - timeStart;
+          const memBytes = Math.max(0, memEnd - memStart);
+          
+          console.log(JSON.stringify({ success: true, timeMs, memKb: memBytes / 1024 }));
+        } catch (err) {
+          console.log(JSON.stringify({ success: false, error: err.message }));
+        }
+      `;
+
+      let stdoutData = '';
+      let stderrData = '';
+
+      child.stdout.on('data', (data) => {
+        stdoutData += data.toString();
+      });
+
+      child.stderr.on('data', (data) => {
+        stderrData += data.toString();
+      });
+
+      child.on('close', (exitCode) => {
+        if (exitCode !== 0) {
+          if (stderrData.includes('Allocation failed') || stderrData.includes('Out of memory')) {
+            resolve({ success: false, error: 'Memory limit of 16MB exceeded.' });
+          } else {
+            resolve({
+              success: false,
+              error: stderrData.trim() || `Process exited with code ${exitCode}`,
+            });
+          }
+          return;
+        }
+
+        try {
+          const result = JSON.parse(stdoutData.trim());
+          resolve(result);
+        } catch (e) {
+          resolve({ success: false, error: 'Internal execution sandbox crash.' });
+        }
+      });
+
+      child.stdin.write(runnerScript);
+      child.stdin.end();
+    });
+  }
+
+  // ── Complexity Sandbox Profiler ───────────────────────────────────────────
+  if (pathname === '/api/execute/profile' && req.method === 'POST') {
+    if (
+      !applyRateLimit(
+        req,
+        res,
+        sdlcAdvisorLimiter,
+        'Too many profile requests. Please try again later.'
+      )
+    ) {
+      return;
+    }
+
+    let payload;
+    try {
+      payload = await readJsonBody(req);
+    } catch {
+      return sendJson(res, 400, { error: 'Invalid JSON body.' });
+    }
+
+    const problemName = String(payload.problemName || '').trim();
+    const problemDescription = String(payload.problemDescription || '').trim();
+    const code = String(payload.code || '');
+    const language = String(payload.language || '').trim();
+
+    if (!code) {
+      return sendJson(res, 400, { error: 'Code is required for review.' });
+    }
+
+    const MAX_REVIEW_CODE_LENGTH = 20000;
+    if (code.length > MAX_REVIEW_CODE_LENGTH) {
+      return sendJson(res, 400, {
+        error: `Code exceeds maximum length of ${MAX_REVIEW_CODE_LENGTH} characters.`,
+      });
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return sendJson(res, 503, { error: 'AI reviewer unavailable (GEMINI_API_KEY not set).' });
+    }
+
+    const prompt = `You are a critical senior software engineer and static analysis tool. Analyze the following user code for the problem "${problemName}" (Language: ${language}).
+Problem description (if any):
+${problemDescription}
+
+User Code:
+\`\`\`${language}
+${code}
+\`\`\`
+
+Perform an in-depth audit of the code. Look for:
+1. Poor time/space complexity (e.g., O(N^2) where O(N) is possible).
+2. Unsafe operations, memory leaks, or potential crash points.
+3. Styling issues, bad practices, or un-idiomatic code.
+4. Edge-case bugs, off-by-one errors, or incorrect logic.
+
+You must return a JSON array of suggestions.
+Each item in the array must be an object with the following exact keys:
+- "lineStart": (number) 1-based start line number of the flagged code section.
+- "lineEnd": (number) 1-based end line number of the flagged code section (inclusive).
+- "severity": (string) either "warning" or "error".
+- "message": (string) clear, concise description of the issue and why it is a problem.
+- "suggestionContent": (string) the proposed code snippet that should replace the code from lineStart to lineEnd. Make sure this snippet integrates seamlessly as a drop-in replacement for the exact lines from lineStart to lineEnd.
+
+Example format:
+[
+  {
+    "lineStart": 5,
+    "lineEnd": 8,
+    "severity": "error",
+    "message": "This linear search inside a loop causes O(N^2) complexity. Use a hash map for O(N) lookup.",
+    "suggestionContent": "    if (seen.has(complement)) {\\n        return [seen.get(complement), i];\\n    }"
+  }
+]
+
+CRITICAL RULES:
+1. Only flag genuine issues. If the code is perfect, return an empty array [].
+2. The lineStart and lineEnd must match the line numbers of the user code EXACTLY.
+3. "suggestionContent" must be a direct replacement for the lines from lineStart to lineEnd (inclusive). Ensure correct indentation, newlines, and syntax so that replacing those lines with suggestionContent keeps the overall file syntax correct.
+4. Return ONLY valid JSON. Do not include markdown code block tags in your raw response (like \`\`\`json) if possible, but if you do, the server will parse it. Ensure it parses as a valid JSON array.`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.2,
+              responseMimeType: 'application/json',
+            },
+          }),
+          signal: controller.signal,
+        }
+      );
+      clearTimeout(timeoutId);
+
+      const result = await response.json();
+      let raw = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!raw) {
+        return sendJson(res, 502, { error: 'No suggestions were generated. Please try again.' });
+      }
+
+      raw = raw.trim();
+      if (raw.startsWith('```')) {
+        raw = raw
+          .replace(/^```(?:json)?\n?/, '')
+          .replace(/\n?```$/, '')
+          .trim();
+      }
+
+      let suggestions;
+      try {
+        suggestions = JSON.parse(raw);
+      } catch (err) {
+        console.error('Failed to parse Gemini review JSON:', raw);
+        return sendJson(res, 502, { error: 'AI returned an invalid JSON response format.' });
+      }
+
+      const lines = code.split('\n');
+      const totalLines = lines.length;
+
+      const validSuggestions = (Array.isArray(suggestions) ? suggestions : []).map((s) => {
+        const lineStart = Math.max(1, Math.min(totalLines, Number(s.lineStart)));
+        const lineEnd = Math.max(lineStart, Math.min(totalLines, Number(s.lineEnd)));
+        const severity = s.severity === 'error' ? 'error' : 'warning';
+        return {
+          lineStart,
+          lineEnd,
+          severity,
+          message: String(s.message || 'AI Review Suggestion'),
+          suggestionContent: String(s.suggestionContent || ''),
+        };
+      });
+
+      return sendJson(res, 200, { success: true, suggestions: validSuggestions });
+    } catch (error) {
+      console.error('AI review error:', error);
+      return sendJson(res, 500, { error: 'Failed to complete AI review.' });
+    }
+  }
+
   // ── Leaderboard ──────────────────────────────────────────────────────────
   if (pathname === '/api/leaderboard' && req.method === 'GET') {
     try {
@@ -3132,8 +3359,10 @@ function resolveStaticPath(pathname) {
     '/verify-email.html': 'pages/auth/verify-email.html',
     '/community': 'pages/community/community/community.html',
     '/community.html': 'pages/community/community/community.html',
-    '/rust-learning': 'rust-learning.html',
-    '/rust-learning.html': 'rust-learning.html',
+    '/rust-learning': 'pages/rust-academy/rust-academy.html',
+    '/rust-learning.html': 'pages/rust-academy/rust-academy.html',
+    '/rust-academy': 'pages/rust-academy/rust-academy.html',
+    '/rust-academy.html': 'pages/rust-academy/rust-academy.html',
     '/python-learning': 'pages/learning/python-learning/python-learning.html',
     '/javascript-learning': 'pages/learning/javascript-learning/javascript-learning.html',
     '/dbms-learning': 'pages/learning/dbms-learning/dbms-learning.html',
@@ -3296,6 +3525,16 @@ async function serveStatic(req, res, pathname) {
 
     headers['Content-Type'] = mimeTypes[ext] || 'application/octet-stream';
     res.writeHead(200, headers);
+    res.end(content);
+  } catch {
+    await serve404Page(req, res);
+  }
+}
+
+async function serve404Page(req, res) {
+  try {
+    const content = await fs.readFile(PAGE_404, 'utf8');
+    res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(content);
   } catch {
     res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
@@ -3873,6 +4112,37 @@ io.on('connection', (socket) => {
     }
   });
 
+  // ── Multiplayer Battle Live Telemetry ──
+  socket.on('battle-typing', (data) => {
+    const valid = validateSocketInput(data, {
+      battleId: { type: 'string', required: true },
+      userId: { type: 'string', required: true },
+      typing: { type: 'boolean', required: true },
+    });
+    if (!valid) return;
+    socket.to(`battle_${valid.battleId}`).emit('opponent:typing', {
+      userId: valid.userId,
+      typing: valid.typing,
+    });
+  });
+
+  socket.on('battle-editor-state', (data) => {
+    const valid = validateSocketInput(data, {
+      battleId: { type: 'string', required: true },
+      userId: { type: 'string', required: true },
+      charCount: { type: 'number', required: true },
+      syntaxErrors: { type: 'number', required: true },
+      wpm: { type: 'number', required: true },
+    });
+    if (!valid) return;
+    socket.to(`battle_${valid.battleId}`).emit('opponent:editor-state', {
+      userId: valid.userId,
+      charCount: valid.charCount,
+      syntaxErrors: valid.syntaxErrors,
+      wpm: valid.wpm,
+    });
+  });
+
   socket.on('battle-submit', (data) => {
     const valid = validateSocketInput(data, {
       battleId: { type: 'string', required: true },
@@ -3887,7 +4157,19 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const passed = runTestCases(battle.problemTitle, valid.code);
+    let results = [];
+    try {
+      results = runDetailedTestCases(battle.problemTitle, valid.code);
+    } catch (e) {
+      results = [false];
+    }
+    const passed = results.length > 0 && results.every((r) => r === true);
+
+    // Broadcast test run results to the room for opponent telemetry grid
+    socket.to(`battle_${valid.battleId}`).emit('opponent:test-run', {
+      userId: valid.userId,
+      results: results,
+    });
 
     if (passed) {
       battle.status = 'completed';
@@ -3902,6 +4184,7 @@ io.on('connection', (socket) => {
       socket.emit('battle-submit-result', {
         success: false,
         message: 'Tests failed. Keep trying!',
+        results: results,
       });
     }
   });
