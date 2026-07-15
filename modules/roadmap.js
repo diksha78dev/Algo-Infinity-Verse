@@ -128,6 +128,36 @@ function initRoadmap() {
       if (progress === 100) stages[2].classList.add('active');
     }, 500);
   }
+
+  // Calculate progress for each stage (Beginner, Intermediate, Advanced) based on problem difficulty
+  const completedProblems = userProgress.completedProblems || [];
+  const easyProbs = practiceProblems.filter((p) => p.difficulty.toLowerCase() === 'easy');
+  const mediumProbs = practiceProblems.filter((p) => p.difficulty.toLowerCase() === 'medium');
+  const hardProbs = practiceProblems.filter((p) => p.difficulty.toLowerCase() === 'hard');
+
+  const solvedEasy = easyProbs.filter((p) => completedProblems.includes(p.id)).length;
+  const solvedMedium = mediumProbs.filter((p) => completedProblems.includes(p.id)).length;
+  const solvedHard = hardProbs.filter((p) => completedProblems.includes(p.id)).length;
+
+  const beginnerProgress = easyProbs.length ? Math.round((solvedEasy / easyProbs.length) * 100) : 0;
+  const intermediateProgress = mediumProbs.length
+    ? Math.round((solvedMedium / mediumProbs.length) * 100)
+    : 0;
+  const advancedProgress = hardProbs.length ? Math.round((solvedHard / hardProbs.length) * 100) : 0;
+
+  const updateStageCard = (level, percent) => {
+    const cards = document.querySelectorAll(`.stage[data-level="${level}"]`);
+    cards.forEach((card) => {
+      const fill = card.querySelector('.stage-progress-fill');
+      const text = card.querySelector('.stage-progress-percent');
+      if (fill) fill.style.width = `${percent}%`;
+      if (text) text.textContent = `${percent}%`;
+    });
+  };
+
+  updateStageCard('beginner', beginnerProgress);
+  updateStageCard('intermediate', intermediateProgress);
+  updateStageCard('advanced', advancedProgress);
 }
 
 function renderBasicRoadmap() {
