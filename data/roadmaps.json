@@ -86,6 +86,37 @@
       }
     ]
   },
+  "intermediate": {
+    "title": "Intermediate DSA Roadmap",
+    "description": "Level up your algorithmic thinking. This roadmap covers trees, graphs basics, dynamic programming introduction, and more.",
+    "estimatedTime": "10-12 Weeks",
+    "steps": [
+      {
+        "id": 1,
+        "title": "Advanced Trees",
+        "desc": "Binary Search Trees, Heaps, Priority Queues",
+        "difficulty": "Medium",
+        "estimatedTime": "2 weeks",
+        "icon": "fa-tree"
+      },
+      {
+        "id": 2,
+        "title": "Graph Basics",
+        "desc": "Graph Representation, BFS, DFS, Cycle Detection",
+        "difficulty": "Medium",
+        "estimatedTime": "2 weeks",
+        "icon": "fa-project-diagram"
+      },
+      {
+        "id": 3,
+        "title": "Dynamic Programming Intro",
+        "desc": "Memoization, Tabulation, Knapsack, Longest Common Subsequence",
+        "difficulty": "Medium",
+        "estimatedTime": "3 weeks",
+        "icon": "fa-layer-group"
+      }
+    ]
+  },
   "advanced": {
     "title": "Advanced DSA Roadmap",
     "description": "Master advanced topics in Data Structures and Algorithms. Deep dive into graph algorithms, dynamic programming, advanced trees, system design, and competitive programming patterns.",
