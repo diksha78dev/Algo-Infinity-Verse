@@ -56,13 +56,13 @@
           if (!element) return;
 
           if (element.tagName === 'INPUT') element.value = '';
-          else element.textContent = 'Learner';
+          element.textContent = 'Learner';
         }
       );
 
       document
         .querySelectorAll('[data-auth-user-name]')
-        .forEach((el) => (el.textContent = 'Learner'));
+        .forEach((el) => (el.textContent = 'Hello Learner'));
 
       document.querySelectorAll('[data-auth-user-email]').forEach((el) => (el.textContent = ''));
 
@@ -84,9 +84,11 @@
       }
     );
 
+    const displayName = user?.name || 'Guest';
+
     document
       .querySelectorAll('[data-auth-user-name]')
-      .forEach((el) => (el.textContent = user.name));
+      .forEach((el) => (el.textContent = `Hello ${displayName}`));
 
     document
       .querySelectorAll('[data-auth-user-email]')
@@ -122,7 +124,7 @@
               <i class="fas fa-user-circle settings-avatar-fallback"></i>
             </div>
             <div class="settings-user-details">
-              <div class="settings-user-name" data-auth-user-name>Learner</div>
+              <div class="settings-user-name" data-auth-user-name>Hello Learner</div>
               <div class="settings-user-email" data-auth-user-email></div>
             </div>
           </div>
@@ -498,10 +500,21 @@
         const accessToken = redirectResult?.accessToken;
 
         if (accessToken) {
+          // Bridge Supabase OAuth -> app session. This app requires CSRF for
+          // state-changing requests, so we must fetch a CSRF token first.
+          const csrfResponse = await fetch('/api/csrf-token', {
+            credentials: 'include',
+          });
+          if (!csrfResponse.ok) throw new Error('Failed to initialize secure session.');
+          const { csrfToken } = await csrfResponse.json();
+
           const response = await fetch('/api/auth/supabase', {
             method: 'POST',
             credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'x-csrf-token': csrfToken,
+            },
             body: JSON.stringify({ accessToken }),
           });
           if (response.ok) {
