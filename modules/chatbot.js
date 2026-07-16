@@ -33,9 +33,22 @@ function initChatbot() {
   toggle.addEventListener("click", () => { windowEl.classList.toggle("hidden"); const badge = toggle.querySelector(".chatbot-badge"); if (badge) badge.style.display = "none"; });
   close.addEventListener("click", () => windowEl.classList.add("hidden"));
 
+  // Guards against rapid double-activation (e.g. clicking two quick-question
+  // buttons in a row, or holding Enter) stacking multiple pending responses
+  // and duplicate "typing" indicators. See #2497.
+  let responsePending = false;
+
+  function setSendControlsDisabled(disabled) {
+    send.disabled = disabled;
+    quickQs.forEach((btn) => { btn.disabled = disabled; });
+  }
+
   function sendMessage() {
+    if (responsePending) return;
     const message = input.value.trim();
     if (!message) return;
+    responsePending = true;
+    setSendControlsDisabled(true);
     addChatMessage(message, "user");
     input.value = "";
     const loadingEl = document.createElement("div");
@@ -44,7 +57,13 @@ function initChatbot() {
     const messagesContainer = document.getElementById("chatbotMessages");
     messagesContainer.appendChild(loadingEl);
     messagesContainer.scrollTo({ top: messagesContainer.scrollHeight, behavior: "smooth" });
-    setTimeout(() => { loadingEl.remove(); const response = getBotResponse(message); addChatMessage(response, "bot", { html: true }); }, 1000);
+    setTimeout(() => {
+      loadingEl.remove();
+      const response = getBotResponse(message);
+      addChatMessage(response, "bot", { html: true });
+      responsePending = false;
+      setSendControlsDisabled(false);
+    }, 1000);
   }
 
   send.addEventListener("click", sendMessage);
