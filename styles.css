@@ -2468,14 +2468,6 @@ html.light-mode .recent-item.selected {
   }
 }
 
-/* ===== BACK TO TOP BUTTON ===== */
-.back-to-top {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  z-index: 9999;
-}
-
 /* ===== BREADCRUMB BAR ===== */
 .breadcrumb-bar {
   display: none;

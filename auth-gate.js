@@ -189,8 +189,7 @@
     ".settings-toggle",
     "#menuToggle",
     "#scrollTopBtn",
-    "#backToTopBtn",
-    ".back-to-top",
+
     ".modal-close",
     "#authGateModalClose",
     "#authGateDismiss",
