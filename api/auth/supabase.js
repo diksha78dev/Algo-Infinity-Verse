@@ -12,7 +12,7 @@
  * @requires ../server.js
  */
 
-import { requestHandler } from '../../server.js';
+import { handleApi } from '../../server.js';
 
 /**
  * Vercel serverless function configuration.
@@ -68,5 +68,8 @@ export const config = {
  * // Body: { email: 'user@example.com', password: 'secure123', name: 'John Doe' }
  */
 export default function handler(req, res) {
-  return requestHandler(req, res);
+  // Delegate directly to the internal API dispatcher.
+  // This avoids edge-cases where requestHandler path normalization differs
+  // under the Vercel serverless runtime.
+  return handleApi(req, res, '/api/auth/supabase');
 }

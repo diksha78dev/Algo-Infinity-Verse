@@ -4566,6 +4566,8 @@ io.on('connection', (socket) => {
 export {
   server,
   requestHandler,
+  // Expose internal auth endpoint handler for Vercel function delegation.
+  handleApi,
   hashPassword,
   passwordMatches,
   applySM2,
