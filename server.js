@@ -2923,7 +2923,7 @@ async function serveStatic(req, res, pathname) {
       content = Buffer.from(htmlContent, 'utf-8');
       headers['Content-Security-Policy'] =
         `default-src 'self'; ` +
-        `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://apis.google.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net; ` +
+        `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://apis.google.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://esm.sh https://cdn.socket.io; ` +
         `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com; ` +
         `font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; ` +
         `img-src 'self' data: https: blob:; ` +

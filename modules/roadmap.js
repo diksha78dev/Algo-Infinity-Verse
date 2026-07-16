@@ -475,7 +475,7 @@ function showPrerequisiteWarningModal() {
       It looks like you haven't started the <strong>Beginner Roadmap</strong> yet (0% completed). We highly recommend mastering the fundamentals before diving into advanced topics.
     </p>
     <div style="display: flex; flex-direction: column; gap: 10px;">
-      <a href="beginner-roadmap.html" class="btn btn-primary" style="padding: 12px; font-weight: 600; text-decoration: none; border-radius: 8px; text-align: center;">🌱 Start Beginner Path</a>
+      <a href="/pages/roadmaps/roadmaps.html?tab=beginner" class="btn btn-primary" style="padding: 12px; font-weight: 600; text-decoration: none; border-radius: 8px; text-align: center;">🌱 Start Beginner Path</a>
       <button id="closePrereqModal" class="btn btn-secondary" style="padding: 12px; background: transparent; border: 1px solid #475569; color: #cbd5e1; border-radius: 8px; cursor: pointer;">Continue Anyway</button>
     </div>
   `;
@@ -500,7 +500,7 @@ function showPrerequisiteWarningModal() {
 
   document.getElementById('closePrereqModal').addEventListener('click', () => {
     closeModal();
-    window.location.href = 'advanced-roadmap.html';
+    window.location.href = '/pages/roadmaps/roadmaps.html?tab=advanced';
   });
 
   modal.addEventListener('click', (e) => {

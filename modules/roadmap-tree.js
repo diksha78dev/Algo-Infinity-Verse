@@ -90,7 +90,7 @@
     .roadmap-svg {
       width: 100%;
       height: 600px;
-      background: #0f172a;
+      background: #0f0f15;
       border-radius: 12px;
       overflow: visible;
     }
@@ -105,20 +105,16 @@
     }
     .tree-node {
       cursor: pointer;
-      transition: transform 0.2s;
-    }
-    .tree-node:hover {
-      transform: scale(1.1);
     }
     .node-circle {
       fill: #1e293b;
       stroke: #475569;
       stroke-width: 3;
-      transition: fill 0.3s, stroke 0.3s;
+      transition: fill 0.2s, stroke 0.2s;
     }
     .tree-node:hover .node-circle {
-      stroke: #8b5cf6;
-      fill: #2e1065;
+      stroke: #94a3b8;
+      fill: #1e2536;
     }
     .node-icon {
       font-family: "Font Awesome 6 Free";
@@ -129,7 +125,7 @@
       font-size: 16px;
     }
     .tree-node:hover .node-icon {
-      fill: #c084fc;
+      fill: #e2e2e8;
     }
     .node-label {
       fill: #cbd5e1;
@@ -149,7 +145,7 @@
       left: 50%;
       transform: translateX(-50%);
       background: rgba(30, 41, 59, 0.95);
-      border: 1px solid rgba(139, 92, 246, 0.3);
+      border: 1px solid rgba(148, 163, 184, 0.2);
       padding: 15px;
       border-radius: 12px;
       width: 90%;
@@ -166,7 +162,7 @@
     }
     .tree-detail-panel h4 {
       margin: 0 0 5px 0;
-      color: #8b5cf6;
+      color: #e2e2e8;
       font-size: 1.1rem;
     }
     .tree-detail-panel p {
@@ -309,7 +305,7 @@
         document.getElementById('treeDetailTitle').textContent = step.title;
         document.getElementById('treeDetailDesc').textContent = step.desc;
         document.getElementById('treeDetailDifficulty').textContent = step.difficulty || 'Medium';
-        document.getElementById('treeDetailTime').textContent = `⏱️ ${step.estimatedTime || 'N/A'}`;
+        document.getElementById('treeDetailTime').textContent = step.estimatedTime || 'N/A';
         panel.style.display = 'block';
       };
       group.addEventListener('click', showDetail);
