@@ -271,6 +271,9 @@
       const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       group.setAttribute('class', 'tree-node');
       group.setAttribute('transform', `translate(${node.x}, ${node.y})`);
+      group.setAttribute('tabindex', '0');
+      group.setAttribute('role', 'button');
+      group.setAttribute('aria-label', `${step.title}, ${step.difficulty || 'Medium'} difficulty`);
 
       // Circle
       const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -301,13 +304,17 @@
       group.appendChild(num);
 
       // Click Event
-      group.addEventListener('click', (e) => {
+      const showDetail = (e) => {
         e.stopPropagation();
         document.getElementById('treeDetailTitle').textContent = step.title;
         document.getElementById('treeDetailDesc').textContent = step.desc;
         document.getElementById('treeDetailDifficulty').textContent = step.difficulty || 'Medium';
         document.getElementById('treeDetailTime').textContent = `⏱️ ${step.estimatedTime || 'N/A'}`;
         panel.style.display = 'block';
+      };
+      group.addEventListener('click', showDetail);
+      group.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') showDetail(e);
       });
 
       svg.appendChild(group);
