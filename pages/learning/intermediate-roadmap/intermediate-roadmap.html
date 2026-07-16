@@ -541,12 +541,21 @@
       </p>
     </section>
 
+    <div class="progress-section" style="text-align: center; margin-bottom: 2rem">
+      <div class="view-toggle">
+        <button id="listViewBtn" class="active">List View</button>
+        <button id="treeViewBtn">Tree View</button>
+      </div>
+    </div>
+
     <section class="roadmap-container" id="roadmapStepsContainer">
       <div style="text-align: center; padding: 2rem">
         <i class="fas fa-spinner fa-spin fa-2x" style="color: #8b5cf6"></i>
         <p style="margin-top: 10px; color: #cbd5e1">Loading roadmap steps...</p>
       </div>
     </section>
+
+    <div class="roadmap-container hidden" id="roadmapVisualTree"></div>
 
     <div id="footer-placeholder"></div>
 
@@ -557,6 +566,7 @@
     <script src="/auth.js"></script>
     <script src="/theme.js"></script>
     <script src="/auth-gate.js"></script>
+    <script src="/modules/roadmap-tree.js"></script>
 
     <script>
       loadPartial('navbar-placeholder', '/partials/navbar.html');
@@ -584,12 +594,39 @@
             <div class="content">
                 <h2>${idx + 1}. ${step.title}</h2>
                 <p>${step.desc}</p>
+                <span class="badge badge-${step.difficulty.toLowerCase()}">${step.difficulty}</span>
+                <div class="time-estimate">⏱️ Estimated: ${step.estimatedTime}</div>
             </div>
             <span class="topic-number">#${(idx + 1).toString().padStart(2, '0')}</span>
         </div>
       `
             )
             .join('');
+
+          // Initialize SVG visual tree
+          if (window.initRoadmapTree) {
+            window.initRoadmapTree('intermediate', intermediate.steps);
+          }
+
+          // Setup toggle controls
+          const listBtn = document.getElementById('listViewBtn');
+          const treeBtn = document.getElementById('treeViewBtn');
+          const stepsContainer = document.getElementById('roadmapStepsContainer');
+          const treeContainer = document.getElementById('roadmapVisualTree');
+
+          listBtn.addEventListener('click', () => {
+            listBtn.classList.add('active');
+            treeBtn.classList.remove('active');
+            stepsContainer.classList.remove('hidden');
+            treeContainer.classList.add('hidden');
+          });
+
+          treeBtn.addEventListener('click', () => {
+            treeBtn.classList.add('active');
+            listBtn.classList.remove('active');
+            stepsContainer.classList.add('hidden');
+            treeContainer.classList.remove('hidden');
+          });
         } catch (err) {
           console.error('Error loading roadmap:', err);
           const container = document.getElementById('roadmapStepsContainer');

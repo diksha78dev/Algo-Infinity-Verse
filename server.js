@@ -20,7 +20,12 @@ import { findMissingSkills } from './backend/resume-analyzer/skills.js';
 import { getSuggestions } from './backend/resume-analyzer/suggestions.js';
 import { analyzeWorkflow } from './backend/repository-analyzer/cicdValidator.js';
 import { VCSFactory } from './backend/vcs/VCSFactory.js';
-import { enqueueBulkAudit, getBatchProgress, MAX_BULK_AUDIT_URLS } from './backend/jobs/queue.js';
+import {
+  enqueueBulkAudit,
+  getBatchProgress,
+  MAX_BULK_AUDIT_URLS,
+  getReportStatus,
+} from './backend/jobs/queue.js';
 import './backend/jobs/worker.js'; // Initialize worker
 
 import { parse as csvParse } from 'csv-parse/sync';
@@ -575,12 +580,14 @@ function getSession(req) {
 }
 
 // A team profile is private to its owner — the authenticated user who first
-// created it — and any explicitly listed members. Profiles with no recorded
-// owner are treated as unclaimed legacy data: still readable, and claimed by
-// the first authenticated user who writes them. This closes the IDOR where any
-// client could read/overwrite any profile just by knowing its id.
+// created it — and any explicitly listed members. `profile` must be `null`/
+// `undefined` when no record exists yet (allowing the caller to create one
+// and become its owner); a stored record with no `ownerId` is legacy data
+// with no rightful owner on file, so it fails closed and denies everyone
+// rather than granting open read/write access to anyone who knows the id.
 function canAccessTeamProfile(profile, userId) {
-  if (!profile || !profile.ownerId) return true;
+  if (!profile) return true;
+  if (!profile.ownerId) return false;
   if (profile.ownerId === userId) return true;
   const members = Array.isArray(profile.members) ? profile.members : [];
   return members.some(
@@ -740,10 +747,11 @@ async function handleApi(req, res, pathname) {
       if (!useFirestore) {
         try {
           updatedProfile = await updateTeamProfilesStore((store) => {
-            const currentProfile = store[teamId] || { version: 1 };
+            const existing = store[teamId] || null;
+            const currentProfile = existing || { version: 1 };
 
             // Ownership check: only the owner/members may modify a claimed profile.
-            if (!canAccessTeamProfile(currentProfile, session.sub)) {
+            if (!canAccessTeamProfile(existing, session.sub)) {
               const forbiddenError = new Error('Forbidden');
               forbiddenError.status = 403;
               throw forbiddenError;
@@ -2283,6 +2291,41 @@ async function handleApi(req, res, pathname) {
     return await handleReportRequest(req, res, pathname, session);
   }
 
+  if (pathname === '/api/reports/status' && req.method === 'GET') {
+    const session = getSession(req);
+    if (!session) return sendJson(res, 401, { error: 'Authentication required.' });
+
+    const urlParams = new URL(req.url, `http://${req.headers.host}`).searchParams;
+    const jobId = urlParams.get('jobId');
+    if (!jobId) return sendJson(res, 400, { error: 'Missing jobId' });
+
+    try {
+      const jobStatus = await getReportStatus(jobId);
+      if (!jobStatus) return sendJson(res, 404, { error: 'Job not found' });
+
+      if (jobStatus.status === 'completed') {
+        const buffer = Buffer.from(jobStatus.data, 'base64');
+        const isPdf = jobStatus.type === 'pdf';
+        const contentType = isPdf ? 'application/pdf' : 'image/png';
+        const ext = isPdf ? 'pdf' : 'png';
+
+        res.writeHead(200, {
+          'Content-Type': contentType,
+          'Content-Disposition': `attachment; filename="report_${session.sub}.${ext}"`,
+          'Content-Length': buffer.length,
+        });
+        return res.end(buffer);
+      } else if (jobStatus.status === 'failed') {
+        return sendJson(res, 500, { error: jobStatus.error || 'Report generation failed' });
+      } else {
+        return sendJson(res, 200, { status: jobStatus.status });
+      }
+    } catch (err) {
+      console.error('Error fetching report status:', err);
+      return sendJson(res, 500, { error: 'Failed to fetch report status' });
+    }
+  }
+
   if (pathname === '/api/user/benchmark' && req.method === 'GET') {
     const session = getSession(req);
     if (!session) return sendJson(res, 401, { error: 'Authentication required.' });
@@ -3038,7 +3081,7 @@ async function handleApi(req, res, pathname) {
   }
 
   // Helper function to run javascript in child process securely for complexity profiling
-  function runInChild(code, N) {
+  function _runInChild(code, N) {
     return new Promise((resolve) => {
       // Spawn node with 16MB heap memory limit and read from stdin (-)
       const child = spawn(process.execPath, ['--max-old-space-size=16', '-'], {
@@ -4016,16 +4059,36 @@ io.on('connection', (socket) => {
     });
     if (!valid) return;
     socket.join(`battle_${valid.battleId}`);
+    socket.battleId = valid.battleId;
+    socket.battleUserId = valid.userId;
     socket.to(`battle_${valid.battleId}`).emit('battle-user-joined', { userId: valid.userId });
+
+    // Send all existing updates to the joining user for synchronization
+    const battle = activeBattles.get(valid.battleId);
+    if (battle && battle.updates) {
+      socket.emit('battle-init-state', {
+        updates: battle.updates,
+      });
+    }
   });
 
   socket.on('battle-code-update', (data) => {
     const valid = validateSocketInput(data, {
       battleId: { type: 'string', required: true },
       userId: { type: 'string', required: true },
-      code: { type: 'string', string: true },
+      update: { type: 'string', required: true, maxLength: 50000 },
     });
     if (!valid) return;
+
+    // Save update in room state
+    const battle = activeBattles.get(valid.battleId);
+    if (battle) {
+      if (!battle.updates) {
+        battle.updates = [];
+      }
+      battle.updates.push(valid.update);
+    }
+
     socket.to(`battle_${valid.battleId}`).emit('battle-code-update', valid);
   });
 
@@ -4174,6 +4237,7 @@ io.on('connection', (socket) => {
     if (passed) {
       battle.status = 'completed';
       battle.winner = valid.userId;
+      delete battle.updates;
       io.to(`battle_${valid.battleId}`).emit('battle-over', {
         winnerId: valid.userId,
         winnerName: battle.participants[valid.userId].name,
@@ -4466,6 +4530,12 @@ io.on('connection', (socket) => {
       const wbRoom = 'wb_' + socket.wbRoomId;
       socket.to(wbRoom).emit('wb-user-left', { userId: socket.wbUserId });
     }
+    // Handle clean disconnect for Battle Mode CRDT presence and cursors
+    if (socket.battleId && socket.battleUserId) {
+      socket
+        .to(`battle_${socket.battleId}`)
+        .emit('battle-user-left', { userId: socket.battleUserId });
+    }
   });
 
   socket.on('join-room', (roomId, userId) => {
@@ -4496,6 +4566,8 @@ io.on('connection', (socket) => {
 export {
   server,
   requestHandler,
+  // Expose internal auth endpoint handler for Vercel function delegation.
+  handleApi,
   hashPassword,
   passwordMatches,
   applySM2,

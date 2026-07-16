@@ -56,13 +56,13 @@
           if (!element) return;
 
           if (element.tagName === 'INPUT') element.value = '';
-          else element.textContent = 'Learner';
+          element.textContent = 'Learner';
         }
       );
 
       document
         .querySelectorAll('[data-auth-user-name]')
-        .forEach((el) => (el.textContent = 'Learner'));
+        .forEach((el) => (el.textContent = 'Hello Learner'));
 
       document.querySelectorAll('[data-auth-user-email]').forEach((el) => (el.textContent = ''));
 
@@ -84,9 +84,11 @@
       }
     );
 
+    const displayName = user?.name || 'Guest';
+
     document
       .querySelectorAll('[data-auth-user-name]')
-      .forEach((el) => (el.textContent = user.name));
+      .forEach((el) => (el.textContent = `Hello ${displayName}`));
 
     document
       .querySelectorAll('[data-auth-user-email]')
@@ -122,7 +124,7 @@
               <i class="fas fa-user-circle settings-avatar-fallback"></i>
             </div>
             <div class="settings-user-details">
-              <div class="settings-user-name" data-auth-user-name>Learner</div>
+              <div class="settings-user-name" data-auth-user-name>Hello Learner</div>
               <div class="settings-user-email" data-auth-user-email></div>
             </div>
           </div>
@@ -494,16 +496,57 @@
 
     if (!currentSession.authenticated && window.__supabaseClient) {
       try {
-        const redirectResult = await window.__supabaseClient.getSessionToken();
-        const accessToken = redirectResult?.accessToken;
+        // Extract an access token from multiple possible Supabase SDK shapes.
+        const client = window.__supabaseClient;
+        let accessToken = null;
+
+        // Most common: client.getSession() -> { data: { session } }
+        if (typeof client?.getSession === 'function') {
+          const res = await client.getSession();
+          const session = res?.data?.session || res?.session || res;
+          accessToken = session?.access_token || session?.accessToken || null;
+        }
+
+        // Variant: client.auth.getSession() -> { data: { session } }
+        if (!accessToken && typeof client?.auth?.getSession === 'function') {
+          const res = await client.auth.getSession();
+          const session = res?.data?.session || res?.session || res;
+          accessToken = session?.access_token || session?.accessToken || null;
+        }
+
+        // Your current assumption: client.getSessionToken() -> { accessToken }
+        if (!accessToken && typeof client?.getSessionToken === 'function') {
+          const res = await client.getSessionToken();
+          accessToken = res?.accessToken || res?.access_token || null;
+        }
+
+        // Another common variant: client.auth.getAccessToken() -> { access_token }
+        if (!accessToken && typeof client?.auth?.getAccessToken === 'function') {
+          const res = await client.auth.getAccessToken();
+          accessToken = res?.access_token || res?.accessToken || null;
+        }
 
         if (accessToken) {
+          // Bridge Supabase OAuth -> app session. This app requires CSRF for
+          // state-changing requests, so we must fetch a CSRF token first.
+          const csrfResponse = await fetch('/api/csrf-token', {
+            credentials: 'include',
+          });
+          if (!csrfResponse.ok) {
+            throw new Error('Failed to initialize secure session.');
+          }
+          const { csrfToken } = await csrfResponse.json();
+
           const response = await fetch('/api/auth/supabase', {
             method: 'POST',
             credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'x-csrf-token': csrfToken,
+            },
             body: JSON.stringify({ accessToken }),
           });
+
           if (response.ok) {
             const payload = await response.json();
             currentSession = { authenticated: true, user: payload.user };
@@ -513,14 +556,19 @@
             renderAuthNav();
             updateProfileNames(currentSession.user);
           } else {
-            const errorBody = await response.text().catch(() => 'Unknown error');
+            let errorBody = 'Unknown error';
+            try {
+              errorBody = await response.json();
+            } catch {
+              errorBody = await response.text().catch(() => 'Unknown error');
+            }
             console.error('[auth] Supabase bridge failed:', response.status, errorBody);
           }
         } else {
           console.debug('[auth] No Supabase access token in session');
         }
       } catch (error) {
-        if (error.message !== 'Supabase not configured')
+        if (error?.message !== 'Supabase not configured')
           console.error('[auth] Supabase bridge error:', error);
       }
     }

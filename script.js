@@ -6265,3 +6265,26 @@ function updateProblemCount(filteredProblems) {
     countElement.textContent = `${total} problem${total !== 1 ? 's' : ''}`;
   }
 }
+
+// ============================================
+// BREADCRUMB SETUP
+// ============================================
+// Ensure the breadcrumb DOM element exists on every page so the
+// NavigationManager can attach to it — even on pages that don't load
+// the navbar partial (where the element normally lives).
+(function () {
+  if (!document.getElementById('dynamic-breadcrumbs')) {
+    const div = document.createElement('div');
+    div.id = 'dynamic-breadcrumbs';
+    div.className = 'breadcrumb-bar';
+    document.body.appendChild(div);
+  }
+
+  // Load navigationManager if not already present
+  if (!window.navManager) {
+    const s = document.createElement('script');
+    s.src = '/utils/navigationManager.js';
+    s.defer = true;
+    document.head.appendChild(s);
+  }
+})();

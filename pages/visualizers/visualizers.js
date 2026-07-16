@@ -281,6 +281,13 @@ const visualizers = [
     icon: 'fa-link',
     desc: 'Visualize Disjoint Set Union with path compression and union by rank.',
   },
+  {
+    name: 'Graph Coloring Visualizer',
+    path: '/pages/visualizers/graph-coloring-visualizer/graph-coloring-visualizer.html',
+    category: 'Graph Algorithms',
+    icon: 'fa-palette',
+    desc: 'Greedy vs backtracking coloring — exam scheduling, register allocation, and map coloring.',
+  },
 
   // ── Dynamic Programming ──
   {
@@ -1068,6 +1075,23 @@ const visualizers = [
     category: 'Systems & OS',
     icon: 'fa-tower-broadcast',
     desc: 'Visualize Peer-to-Peer connections, STUN hole-punching, and TURN relays.',
+  },
+  {
+    name: 'GraphQL N+1 & DataLoader Visualizer',
+    path: '/pages/visualizers/graphql-n1-simulator/graphql-n1-simulator.html',
+    category: 'Architecture',
+    icon: 'fa-diagram-project',
+    desc: 'Visualize naive GraphQL resolvers causing the N+1 problem, and how DataLoader batches requests.',
+    name: 'WebAssembly Memory & Interop Visualizer',
+    path: '/pages/visualizers/wasm-memory-simulator/wasm-memory-simulator.html',
+    category: 'Systems & OS',
+    icon: 'fa-memory',
+    desc: 'Understand WebAssembly linear memory and how it exchanges data with JavaScript.',
+    name: 'Snowflake Distributed ID Visualizer',
+    path: '/pages/visualizers/snowflake-id-visualizer/snowflake-id-visualizer.html',
+    category: 'Architecture',
+    icon: 'fa-bolt',
+    desc: 'Generate highly-scalable 64-bit unique identifiers using timestamps and machine IDs.',
   },
 ];
 

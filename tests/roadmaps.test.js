@@ -41,7 +41,20 @@ describe('/api/roadmaps registry endpoint', () => {
     expect(data.intermediate.title).toBe('Intermediate DSA Roadmap');
     expect(data.advanced.title).toBe('Advanced DSA Roadmap');
     expect(data.beginner.steps.length).toBe(10);
-    expect(data.intermediate.steps.length).toBe(3);
+    expect(data.intermediate.steps.length).toBe(8);
     expect(data.advanced.steps.length).toBe(10);
+  });
+
+  it('has valid roadmaps HTML, CSS and JS files', async () => {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+
+    const htmlPath = path.join(process.cwd(), 'pages', 'roadmaps', 'roadmaps.html');
+    const cssPath = path.join(process.cwd(), 'pages', 'roadmaps', 'roadmaps.css');
+    const jsPath = path.join(process.cwd(), 'pages', 'roadmaps', 'roadmaps.js');
+
+    await expect(fs.access(htmlPath)).resolves.not.toThrow();
+    await expect(fs.access(cssPath)).resolves.not.toThrow();
+    await expect(fs.access(jsPath)).resolves.not.toThrow();
   });
 });
