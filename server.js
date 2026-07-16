@@ -23,6 +23,7 @@ import {
   getBatchProgress,
   MAX_BULK_AUDIT_URLS,
   getReportStatus,
+  enqueueLeaderboardUpdate,
 } from './backend/jobs/queue.js';
 import './backend/jobs/worker.js'; // Initialize worker
 

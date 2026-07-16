@@ -278,6 +278,21 @@ async function submitSolution(req, res, user, battleId) {
     });
 
     battleCache.delete(battleId);
+
+    // Trigger leaderboard update in the background
+    (async () => {
+      try {
+        const userDoc = await firestore.collection(USERS).doc(user.sub).get();
+        if (userDoc.exists) {
+          const userXp = Number(userDoc.data().totalXp || userDoc.data().xp || 0);
+          const { enqueueLeaderboardUpdate } = await import('../backend/jobs/queue.js');
+          await enqueueLeaderboardUpdate(user.sub, userXp);
+        }
+      } catch (e) {
+        console.error('[LEADERBOARD] Failed to update user XP in Redis:', e);
+      }
+    })();
+
     return res.status(200).json(result);
   } catch (err) {
     return res.status(400).json({ error: err.message });

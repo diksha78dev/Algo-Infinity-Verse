@@ -10,6 +10,7 @@ export const reportStore = new Map();
 
 let bulkAuditQueue = null;
 let reportQueue = null;
+let leaderboardQueue = null;
 let redisAvailable = false;
 export let redisClient = null;
 
@@ -36,6 +37,11 @@ async function checkRedis() {
 
     reportQueue = new Queue('report-queue', { connection: redisClient });
     reportQueue.on('error', (_err) => {
+      void 0;
+    });
+
+    leaderboardQueue = new Queue('leaderboard-queue', { connection: redisClient });
+    leaderboardQueue.on('error', (_err) => {
       void 0;
     });
   } catch {
@@ -221,4 +227,14 @@ export async function getReportStatus(jobId) {
   return report || null;
 }
 
-export { bulkAuditQueue, reportQueue, redisAvailable, redisReady };
+export async function enqueueLeaderboardUpdate(userId, xp) {
+  if (redisAvailable && redisClient && leaderboardQueue) {
+    try {
+      await leaderboardQueue.add('update-score', { userId, xp: Number(xp) });
+    } catch (err) {
+      console.error(`[LEADERBOARD] Failed to enqueue update for user ${userId}:`, err);
+    }
+  }
+}
+
+export { bulkAuditQueue, reportQueue, leaderboardQueue, redisAvailable, redisReady };

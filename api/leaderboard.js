@@ -1,6 +1,7 @@
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { SESSION_COOKIE, verifySessionToken, parseCookies } from '../backend/utils/sessionToken.js';
+import { getLeaderboardData } from '../backend/services/leaderboard.service.js';
 
 let db = null;
 let useFirestore = false;
@@ -75,7 +76,26 @@ export default async function handler(req, res) {
     const cookies = parseCookies(req.headers.cookie || '');
     const session = verifySessionToken(cookies[SESSION_COOKIE]);
 
-    // Get all users and sort
+    // Try fetching from Redis Sorted Set first
+    const cachedData = await getLeaderboardData({ page, limit });
+    if (cachedData) {
+      const totalUsers = cachedData.totalUsers;
+      const totalPages = Math.ceil(totalUsers / limit);
+      return res.status(200).json({
+        leaders: cachedData.leaders,
+        currentUserId: session?.sub || null,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalUsers,
+          pageSize: limit,
+          hasNext: page < totalPages,
+          hasPrev: page > 1,
+        },
+      });
+    }
+
+    // Fallback: Get all users and sort
     const allUsers = await readUsers();
     const sortedUsers = allUsers
       .map(publicUser)

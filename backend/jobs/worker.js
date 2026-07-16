@@ -6,6 +6,7 @@ import { batchStore, redisAvailable, redisReady, redisClient } from './queue.js'
 
 let auditWorker = null;
 let reportWorker = null;
+let leaderboardWorker = null;
 
 // The Redis availability probe in queue.js runs asynchronously, so `redisAvailable`
 // is still `false` at module-evaluation time. Reading it synchronously here would
@@ -148,8 +149,49 @@ async function startWorker() {
     }
   });
 
+  leaderboardWorker = new Worker(
+    'leaderboard-queue',
+    async (job) => {
+      const { userId, xp } = job.data;
+      if (redisClient) {
+        await redisClient.zadd('leaderboard:xp', Number(xp), userId);
+      }
+    },
+    {
+      connection: conn,
+      concurrency: 5,
+    }
+  );
+
+  leaderboardWorker.on('error', (_err) => {
+    void 0;
+  });
+
+  // Set up periodic sync (every 1 hour)
+  setInterval(
+    async () => {
+      try {
+        const { syncDatabaseToRedis } = await import('../services/leaderboard.service.js');
+        await syncDatabaseToRedis();
+      } catch (err) {
+        console.error('[LEADERBOARD] Periodic sync failed:', err);
+      }
+    },
+    60 * 60 * 1000
+  ).unref?.();
+
+  // Run initial sync on startup
+  setImmediate(async () => {
+    try {
+      const { syncDatabaseToRedis } = await import('../services/leaderboard.service.js');
+      await syncDatabaseToRedis();
+    } catch (err) {
+      console.error('[LEADERBOARD] Initial startup sync failed:', err);
+    }
+  });
+
   void 0;
-  return { auditWorker, reportWorker };
+  return { auditWorker, reportWorker, leaderboardWorker };
 }
 
 // Kick off worker startup as a module side effect. Errors are swallowed so a
@@ -160,4 +202,4 @@ const workerReady = startWorker().catch((_err) => {
   return null;
 });
 
-export { auditWorker, reportWorker, startWorker, workerReady };
+export { auditWorker, reportWorker, leaderboardWorker, startWorker, workerReady };
