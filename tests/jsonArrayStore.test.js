@@ -9,6 +9,7 @@ jest.unstable_mockModule('../backend/jobs/queue.js', () => ({
   getBatchProgress: jest.fn(),
   enqueueReport: jest.fn(),
   getReportStatus: jest.fn(),
+  enqueueLeaderboardUpdate: jest.fn(),
   batchStore: new Map(),
   bulkAuditQueue: { add: jest.fn(), on: jest.fn() },
   MAX_BULK_AUDIT_URLS: 50,

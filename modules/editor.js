@@ -823,6 +823,14 @@ function initializeQuizEditor() {
     else if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); runQuizCode(); }
     else if (e.ctrlKey && e.key === 's') { e.preventDefault(); submitQuizCode(); }
   });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('quizEditorModal');
+      if (modal && modal.classList.contains('active')) {
+        closeQuizEditor();
+      }
+    }
+  });
   wireQuizButtons();
   if (languageSelect) languageSelect.addEventListener('change', () => { const editor = document.getElementById('codeEditor'); if (editor && currentProblem) { editor.value = getDefaultCode(languageSelect.value, currentProblem); editor.scrollTop = 0; editor.scrollLeft = 0; } syncEditorState(); updateEditorDisplayMode(); });
   syncEditorState();

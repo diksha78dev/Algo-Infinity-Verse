@@ -35,6 +35,8 @@ function createFakeElement(overrides = {}) {
     querySelector: jest.fn(() => null),
     appendChild: jest.fn(),
     getAttribute: jest.fn(() => null),
+    hasAttribute: jest.fn(() => false),
+    setAttribute: jest.fn(),
     scrollTo: jest.fn(),
     remove: jest.fn(),
     ...overrides,
@@ -67,7 +69,10 @@ describe('chatbot - sendMessage double-send guard', () => {
     originalDocument = global.document;
     originalWindow = global.window;
 
-    global.window = { chatbotResponses: { default: 'Try breaking the problem down.' }, userProgress: {} };
+    global.window = {
+      chatbotResponses: { default: 'Try breaking the problem down.' },
+      userProgress: {},
+    };
     global.document = {
       getElementById: jest.fn((id) => elements[id] || null),
       querySelectorAll: jest.fn((selector) => (selector === '.quick-q' ? quickQButtons : [])),
@@ -123,7 +128,9 @@ describe('chatbot - sendMessage double-send guard', () => {
     // Now that the first response resolved, a new send should work again.
     elements.chatbotInput.value = 'Third question';
     elements.chatbotSend.dispatch('click');
-    expect(elements.chatbotMessages.appendChild.mock.calls.length).toBeGreaterThan(appendCallsAfterFirstSend);
+    expect(elements.chatbotMessages.appendChild.mock.calls.length).toBeGreaterThan(
+      appendCallsAfterFirstSend
+    );
   });
 
   it('rapid clicks on two different quick-question buttons only trigger one pending response', () => {

@@ -35,14 +35,22 @@ async function startWorker() {
       try {
         parsedRepoUrl = new URL(repoUrl);
       } catch {
-        throw new Error('Invalid GitHub URL');
+        throw new Error('Invalid repository URL');
       }
 
+      const validHostnames = [
+        'github.com',
+        'www.github.com',
+        'gitlab.com',
+        'www.gitlab.com',
+        'bitbucket.org',
+        'www.bitbucket.org',
+      ];
       if (
         !['http:', 'https:'].includes(parsedRepoUrl.protocol) ||
-        !['github.com', 'www.github.com'].includes(parsedRepoUrl.hostname.toLowerCase())
+        !validHostnames.includes(parsedRepoUrl.hostname.toLowerCase())
       ) {
-        throw new Error('Invalid GitHub URL');
+        throw new Error('Please provide a valid repository URL (GitHub, GitLab, or Bitbucket).');
       }
 
       try {

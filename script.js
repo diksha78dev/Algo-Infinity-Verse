@@ -1,4 +1,4 @@
-/* global handleActiveNav, initPracticeSection, initProfile, initAiInterviewer, initNewsletterValidation, initFooterCurrentDate, updateProfile, closeTopicModal, saveProblemNotes, closeNotesModal, closeQuizEditor, closeQuizModal, openTopicModal, openQuizModal, renderQuizQuestion, handleProblemClick, escapeHtml, renderPersonalityCard, renderMistakeDnaCard, apiAbort, apiCache, getEditorDraft, getEditorDraftSignature, getProblemSignature, clearEditorDraft, updateEditorDisplayMode, toggleOutputPanel, updateLineNumbers, syncScroll, switchQuizTab, genCppHarness, genJavaHarness, genCHarness, genSwiftHarness, parseTestResults, setOutput, getXPForDifficulty, initializeQuizEditor, closeShortcutModal, initIdentityCard, renderProblems, updatePaginationControls, initDarkMode */
+/* global handleActiveNav, initPracticeSection, initProfile, initAiInterviewer, initNewsletterValidation, initFooterCurrentDate, closeTopicModal, saveProblemNotes, closeNotesModal, closeQuizEditor, closeQuizModal, openTopicModal, openQuizModal, renderQuizQuestion, handleProblemClick, escapeHtml, apiAbort, apiCache, getEditorDraft, getEditorDraftSignature, getProblemSignature, clearEditorDraft, updateEditorDisplayMode, toggleOutputPanel, updateLineNumbers, syncScroll, switchQuizTab, genCppHarness, genJavaHarness, genCHarness, genSwiftHarness, parseTestResults, setOutput, getXPForDifficulty, initializeQuizEditor, closeShortcutModal, renderProblems, updatePaginationControls, initDarkMode */
 
 // Nuke all caches on every page load — ensures fresh content always
 (async function nukeCaches() {
@@ -1796,16 +1796,18 @@ if (localStorage.getItem('algoInfinityVerse')) {
       if (!userProgress.dailyGoals) userProgress.dailyGoals = {};
       if (!userProgress.spacedRepetition) userProgress.spacedRepetition = {};
       if (userProgress.reviewStreak === undefined) userProgress.reviewStreak = 0;
-      if (!userProgress.inventory) userProgress.inventory = {
+      userProgress.inventory = {
         streakFreezes: 0,
         hintTokens: 0,
         xpBoosters: 0,
         exclusiveBadge: false,
         avatarPacks: [],
+        ...(userProgress.inventory || {}),
       };
-      if (!userProgress.avatarCustomization) userProgress.avatarCustomization = {
+      userProgress.avatarCustomization = {
         border: 'none',
         theme: 'default',
+        ...(userProgress.avatarCustomization || {}),
       };
 
       if (loaded.quizScores)
@@ -2293,8 +2295,6 @@ function initNavbar() {
       }
     });
   });
-
-
 
   window.addEventListener('resize', () => {
     if (!isMobile()) {
@@ -3418,7 +3418,7 @@ function submitRoadmapQuiz(stepIndex, type = 'basic') {
 // ============================================
 function initDashboard() {
   updateDashboard();
-  updateProfile();
+  if (typeof updateProfile === 'function') updateProfile();
 }
 
 function renderRevisionSchedulerCard() {
@@ -3530,7 +3530,7 @@ function updateDashboard() {
     if (profileCard) profileCard.after(pCard);
     else grid.prepend(pCard);
   }
-  renderPersonalityCard();
+  if (typeof renderPersonalityCard === 'function') renderPersonalityCard();
   if (grid && !document.getElementById('mistakeDnaCard')) {
     const mCard = document.createElement('div');
     mCard.className = 'dashboard-card mistake-dna-card';
@@ -3543,7 +3543,7 @@ function updateDashboard() {
       else grid.prepend(mCard);
     }
   }
-  renderMistakeDnaCard();
+  if (typeof renderMistakeDnaCard === 'function') renderMistakeDnaCard();
 }
 
 function updateCurrentDate() {
@@ -3693,7 +3693,7 @@ function updateBadges() {
       name: 'Exclusive',
       description: 'A mark of true dedication',
       criteria: 'Purchased from the XP Store',
-      earned: !!(userProgress.inventory?.exclusiveBadge),
+      earned: !!userProgress.inventory?.exclusiveBadge,
     },
   ];
   const earned = badges.filter((b) => b.earned).map((b) => b.id);
@@ -4413,15 +4413,15 @@ function loadUserData() {
     };
     saveUserData();
   }
-  updateProfile();
+  if (typeof updateProfile === 'function') updateProfile();
   getAuthenticatedSession().then((session) => {
     if (session?.user?.name) {
       userProgress.name = session.user.name;
-      updateProfile();
+      if (typeof updateProfile === 'function') updateProfile();
       saveUserData();
     } else {
       userProgress.name = 'Learner';
-      updateProfile();
+      if (typeof updateProfile === 'function') updateProfile();
       saveUserData();
     }
     if (typeof initProfile === 'function') initProfile();
@@ -5683,7 +5683,6 @@ document.addEventListener('keydown', function (e) {
 // ============================================
 // Handled by modules/profile-edit.js (initial-based avatars, language saving)
 // Legacy emoji-based IIFE removed.
-
 
 // Offline/Online status handler
 window.addEventListener('load', () => {
