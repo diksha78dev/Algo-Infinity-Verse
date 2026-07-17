@@ -647,10 +647,13 @@ render();
 
 /* Handle browser back/forward */
 window.addEventListener('popstate', () => {
+window.addEventListener('popstate', () => {
   activeCategory =
     new URLSearchParams(window.location.search).get('category') ||
-    localStorage.getItem('edFilterCategory') ||
+    lsGet('edFilterCategory') ||
     'all';
+  syncChipFromURL();
+});
   syncChipFromURL();
   render();
 });
