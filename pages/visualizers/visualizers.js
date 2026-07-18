@@ -1000,6 +1000,13 @@ const visualizers = [
     desc: 'Build and simulate regular expressions as NFA/DFA automata step by step.',
   },
   {
+    name: 'LL(1) / LR(1) Parser Engine',
+    path: '/pages/ai-features/parser-engine/parser-engine.html',
+    category: 'Special',
+    icon: 'fa-diagram-project',
+    desc: 'Build, analyze, and visualize LL(1) and LR(1) parsing tables, item sets, FIRST/FOLLOW, and live parse tree AST generation.',
+  },
+  {
     name: 'Anytime Algorithms Lab',
     path: '/pages/visualizers/anytime-algorithms-lab/anytime-algorithms-lab.html',
     category: 'Special',
