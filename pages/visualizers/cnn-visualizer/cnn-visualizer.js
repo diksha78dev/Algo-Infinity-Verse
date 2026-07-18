@@ -537,17 +537,19 @@ class CNNVisualizer {
       const c = i % this.poolCols;
 
       // Cat weights: Central heavy
-      const distFromCenter = Math.abs(r - size / 2) + Math.abs(c - size / 2);
+      const centerR = (this.poolRows - 1) / 2;
+      const centerC = (this.poolCols - 1) / 2;
+      const distFromCenter = Math.abs(r - centerR) + Math.abs(c - centerC);
       scores[0] += v * (2.0 - distFromCenter / 2.0);
 
       // Dog weights: Bottom heavy
-      scores[1] += v * (r > size / 2 ? 1.5 : 0.5);
+      scores[1] += v * (r > centerR ? 1.5 : 0.5);
 
       // Car weights: Horizontal features
-      scores[2] += v * (r > size / 3 && r < (2 * size) / 3 ? 1.6 : 0.4);
+      scores[2] += v * (r > this.poolRows / 3 && r < (2 * this.poolRows) / 3 ? 1.6 : 0.4);
 
       // Plane weights: Diagonal/Cross features
-      scores[3] += v * (r === c || r === size - 1 - c ? 1.8 : 0.3);
+      scores[3] += v * (r === c || r === this.poolRows - 1 - c ? 1.8 : 0.3);
     }
 
     // Apply Softmax normalization
