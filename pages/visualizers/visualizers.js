@@ -217,7 +217,7 @@ const visualizers = [
     desc: 'Augmented BST storing intervals — max-endpoint pruning, overlap queries, and calendar conflict detection in O(log n + k).',
   },
   {
-    name: 'Suffix Tree Visualizer (Ukkonen\'s)',
+    name: "Suffix Tree Visualizer (Ukkonen's)",
     path: '/pages/visualizers/suffix-tree-visualizer/suffix-tree-visualizer.html',
     category: 'Special',
     icon: 'fa-sitemap',
@@ -352,11 +352,11 @@ const visualizers = [
     desc: 'Leader election where the highest surviving ID always wins — concurrent failures, network partitions, and split-brain.',
   },
   {
-  name: 'Quorum Replication Visualizer',
-  path: '/pages/visualizers/quorum-replication/quorum-replication.html',
-  category: 'System Design',
-  icon: 'fa-circle-nodes',
-  desc: 'Dynamo-style N/W/R tunable consistency — animated write/read quorums, staleness demo, read repair, and strong consistency guarantee.',
+    name: 'Quorum Replication Visualizer',
+    path: '/pages/visualizers/quorum-replication/quorum-replication.html',
+    category: 'System Design',
+    icon: 'fa-circle-nodes',
+    desc: 'Dynamo-style N/W/R tunable consistency — animated write/read quorums, staleness demo, read repair, and strong consistency guarantee.',
   },
 
   // ── Dynamic Programming ──
@@ -1119,11 +1119,11 @@ const visualizers = [
     desc: 'Spectre side-channel attack — speculative execution visualized.',
   },
   {
-    name: 'DNS Resolution Simulator',
+    name: 'DNS Resolution Visualizer',
     path: '/pages/visualizers/dns-simulator/dns-simulator.html',
-    category: 'Systems & OS',
+    category: 'Distributed Systems',
     icon: 'fa-globe',
-    desc: 'Interactive simulator tracing recursive DNS queries.',
+    desc: 'Visualize the complete DNS lookup process from browser cache to authoritative name servers.',
   },
   {
     name: 'Consistent Hashing Visualizer',
