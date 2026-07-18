@@ -259,5 +259,20 @@
     "name": "Legacy Team",
     "description": "secret",
     "version": 1
+  },
+  "team-owner-1784207371149": {
+    "id": "team-owner-1784207371149",
+    "ownerId": "userA-1784207371149",
+    "name": "A Team",
+    "description": "secret",
+    "members": [],
+    "version": 2,
+    "updatedAt": "2026-07-16T13:09:31.166Z"
+  },
+  "team-legacy-1784207371515": {
+    "id": "team-legacy-1784207371515",
+    "name": "Legacy Team",
+    "description": "secret",
+    "version": 1
   }
 }
