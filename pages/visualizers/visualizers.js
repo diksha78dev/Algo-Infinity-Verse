@@ -793,6 +793,13 @@ const visualizers = [
 
   // ── AI & Machine Learning ──
   {
+    name: 'CNN Layer & Feature Map Explorer',
+    path: '/pages/visualizers/cnn-visualizer/cnn-visualizer.html',
+    category: 'AI & ML',
+    icon: 'fa-images',
+    desc: 'Visualize how convolution, pooling, ReLU, and dense layers extract features from images.',
+  },
+  {
     name: 'Neural Network Backpropagation',
     path: '/pages/visualizers/nn-backprop-visualizer/nn-backprop-visualizer.html',
     category: 'AI & ML',
