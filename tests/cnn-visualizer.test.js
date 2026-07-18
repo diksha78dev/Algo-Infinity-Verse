@@ -91,9 +91,16 @@ describe('CNN Visualizer - Logic and UI State', () => {
   let elementsById;
   let domContentLoadedHandler;
 
+  let originalDocument;
+  let originalWindow;
+  let originalImage;
+  let originalEvent;
+
   beforeEach(() => {
     originalDocument = global.document;
     originalWindow = global.window;
+    originalImage = global.Image;
+    originalEvent = global.Event;
 
     elementsById = {};
     [
@@ -186,6 +193,8 @@ describe('CNN Visualizer - Logic and UI State', () => {
   afterEach(() => {
     global.document = originalDocument;
     global.window = originalWindow;
+    global.Image = originalImage;
+    global.Event = originalEvent;
     jest.clearAllMocks();
   });
 
