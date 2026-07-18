@@ -405,10 +405,12 @@ class AESVisualizer {
         // Find first step of this round and jump
         const targetStepIdx = this.stepsSequence.findIndex((s) => s.round === roundIdx);
         if (targetStepIdx !== -1) {
+          this.state.stateHistory = Array.from({ length: targetStepIdx }, (_, stepIndex) => ({
+            state: this.recomputeStateTo(stepIndex),
+            stepIndex,
+          }));
           this.state.currentStepIndex = targetStepIdx;
-          this.state.currentState =
-            roundIdx === 0 ? [...this.state.plaintextBytes] : this.recomputeStateTo(targetStepIdx);
-          this.state.stateHistory = []; // flush history on direct jump
+          this.state.currentState = this.recomputeStateTo(targetStepIdx);
           this.updateUI();
         }
       });
