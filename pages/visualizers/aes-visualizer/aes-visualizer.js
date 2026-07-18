@@ -337,6 +337,7 @@ class AESVisualizer {
       const el = document.getElementById(`prog-${st}`);
       if (!el) return;
       el.className = 'progress-step';
+      if (currentStep.round === 10 && st === 'mix') return;
       if (st === currentStep.step) {
         el.classList.add('active');
       } else {
