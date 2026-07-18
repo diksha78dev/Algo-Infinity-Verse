@@ -746,6 +746,13 @@ const visualizers = [
     icon: 'fa-box',
     desc: 'Oblivious RAM — hide memory access patterns from adversaries.',
   },
+  {
+    name: 'AES Round Visualizer',
+    path: '/pages/visualizers/aes-visualizer/aes-visualizer.html',
+    category: 'Security & Crypto',
+    icon: 'fa-shield-halved',
+    desc: 'Step-by-step interactive visualizer for the AES (Advanced Encryption Standard) encryption rounds.',
+  },
 
   // ── Math, Geometry & Signals ──
   {
