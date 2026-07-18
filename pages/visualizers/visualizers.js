@@ -1476,11 +1476,11 @@ const visualizers = [
     desc: 'Interactive visualizer comparing Breadth-First Search (BFS) and Depth-First Search (DFS) graph traversal algorithms.',
   },
   {
-    name: 'ECC Finite Field Visualizer | Algo-Infinity-Verse',
+    name: 'Elliptic Curve Cryptography (ECC) Visualizer',
     path: '/pages/visualizers/ecc-finite-field-visualizer/ecc-finite-field-visualizer.html',
     category: 'Security & Crypto',
     icon: 'fa-lock',
-    desc: 'Interactive ECC Finite Field Visualizer | Algo-Infinity-Verse visualization.',
+    desc: 'Interactive visualizer for Elliptic Curve point operations, scalar multiplication, ECDH key exchange, and ECDSA digital signatures.',
   },
   {
     name: 'JWT Structure and Lifecycle Visualizer',
