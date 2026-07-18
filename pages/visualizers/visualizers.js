@@ -344,6 +344,13 @@ const visualizers = [
     icon: 'fa-crown',
     desc: 'Leader election where the highest surviving ID always wins — concurrent failures, network partitions, and split-brain.',
   },
+  {
+  name: 'Quorum Replication Visualizer',
+  path: '/pages/visualizers/quorum-replication/quorum-replication.html',
+  category: 'System Design',
+  icon: 'fa-circle-nodes',
+  desc: 'Dynamo-style N/W/R tunable consistency — animated write/read quorums, staleness demo, read repair, and strong consistency guarantee.',
+  },
 
   // ── Dynamic Programming ──
   {
