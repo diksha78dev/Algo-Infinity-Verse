@@ -1,7 +1,17 @@
 export function validateInterviewExperiencePayload(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return { isValid: false, error: 'Request body must be an object.' };
+  }
+
   const { company, role, difficulty, rating, title, content, topics } = payload;
 
-  if (!company || !role || !difficulty || !rating || !title || !content) {
+  if (
+    typeof company !== 'string' || company.trim() === '' ||
+    typeof role !== 'string' || role.trim() === '' ||
+    !difficulty || !rating ||
+    typeof title !== 'string' || title.trim() === '' ||
+    typeof content !== 'string' || content.trim() === ''
+  ) {
     return {
       isValid: false,
       error: 'Company, role, difficulty, rating, title, and content are required.',
