@@ -62,13 +62,13 @@ import {
   deleteAccountLimiter,
   resendVerificationLimiter,
   resumeAnalysisLimiter,
-  repoAnalysisLimiter,
   sdlcAdvisorLimiter,
   predictionLimiter,
   bulkAuditLimiter,
   logErrorLimiter,
   aiHintLimiter,
 } from './backend/utils/rateLimiter.js';
+import { applyRedisRateLimit, repoAnalysisRedisLimiter } from './backend/utils/redisRateLimiter.js';
 import { generateAIHint } from './backend/services/aiHint.service.js';
 import { applySM2 } from './backend/services/memory.service.js';
 import { sendVerificationEmail } from './backend/services/email.service.js';
@@ -877,14 +877,13 @@ async function handleApi(req, res, pathname) {
   }
 
   if (pathname === '/api/analyze-repository' && req.method === 'POST') {
-    if (
-      !applyRateLimit(
-        req,
-        res,
-        repoAnalysisLimiter,
-        'Too many repository analysis requests. Please try again later.'
-      )
-    ) {
+    const allowed = await applyRedisRateLimit(
+      req,
+      res,
+      repoAnalysisRedisLimiter,
+      'Too many repository analysis requests. Please try again later.'
+    );
+    if (!allowed) {
       return;
     }
     try {
