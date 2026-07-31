@@ -39,6 +39,13 @@ const visualizers = [
     desc: 'Visualize a recurrent neural network acting as a content-addressable memory system.',
   },
   {
+    name: 'Transformer QKV Attention Flow',
+    path: '/pages/visualizers/transformer-qkv-visualizer/transformer-qkv-visualizer.html',
+    category: 'AI & ML',
+    icon: 'fa-project-diagram',
+    desc: 'Interactive visualizer demonstrating the Query, Key, and Value (QKV) dot-product attention mechanism used in LLMs.',
+  },
+  {
     name: 'Distributed Tracing Simulator',
     path: '/pages/visualizers/distributed-tracing/distributed-tracing.html',
     category: 'Distributed Systems',
@@ -100,6 +107,13 @@ const visualizers = [
     category: 'Distributed Systems',
     icon: 'fa-microchip',
     desc: 'Visualize a lock-free Ring Buffer with Producers and Consumers using memory barriers and sequence numbers.',
+  },
+  {
+    name: 'TLB Thrashing & Page Fault Simulator',
+    path: '/pages/visualizers/tlb-page-fault-simulator/tlb-page-fault-simulator.html',
+    category: 'OS & Architecture',
+    icon: 'fa-microchip',
+    desc: 'Simulate virtual memory mapping, TLB cache thrashing via stride access, and costly disk page faults.',
   },
   // ── Sorting & Searching ──
   {
@@ -963,6 +977,13 @@ const visualizers = [
     category: 'Security & Crypto',
     icon: 'fa-user-secret',
     desc: 'Zero-Knowledge Proof concepts visualized step by step.',
+  },
+  {
+    name: 'zk-SNARKs Sandbox',
+    path: '/pages/visualizers/zk-snarks-sandbox/zk-snarks-sandbox.html',
+    category: 'Security & Crypto',
+    icon: 'fa-microchip',
+    desc: 'A cryptography sandbox demonstrating the core mechanism of zk-SNARKs.',
   },
   {
     name: 'Shamir Secret Sharing',
