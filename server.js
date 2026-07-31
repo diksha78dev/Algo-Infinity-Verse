@@ -6,6 +6,7 @@ import fs from 'fs/promises';
 import http from 'http';
 import express from 'express';
 import apiRouter from './backend/routes/api.js';
+import { errorHandler } from './backend/middleware/errorHandler.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
@@ -138,10 +139,7 @@ const REFRESH_COOKIE = 'aiv_refresh';
 const DELETION_LOG_FILE = path.join(DATA_DIR, 'account-deletions.json');
 // ────────────────────────────────────────────────────────────────────────────
 
-const protectedPaths = new Set([
-  '/community',
-  '/community.html',
-]);
+const protectedPaths = new Set(['/community', '/community.html']);
 
 const mimeTypes = {
   '.css': 'text/css; charset=utf-8',
@@ -2343,7 +2341,19 @@ async function handleApi(req, res, pathname) {
 
     try {
       const payload = await readJsonBody(req);
-      const { sourceCode, originalCode, language, stdin, stdout, stderr, exitCode, cpuTime, memory, error, problemId } = payload;
+      const {
+        sourceCode,
+        originalCode,
+        language,
+        stdin,
+        stdout,
+        stderr,
+        exitCode,
+        cpuTime,
+        memory,
+        error,
+        problemId,
+      } = payload;
 
       if (!sourceCode || !language) {
         return sendJson(res, 400, { error: 'sourceCode and language are required.' });
@@ -3124,7 +3134,7 @@ async function serve404Page(req, res) {
   }
 }
 
-async function requestHandler(req, res) {
+async function requestHandler(req, res, next) {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     const pathname = normalizePathname(decodeURIComponent(url.pathname));
@@ -3154,6 +3164,7 @@ async function requestHandler(req, res) {
     return await serveStatic(req, res, pathname);
   } catch (error) {
     console.error(error);
+    if (next) return next(error);
     sendJson(res, 500, { error: 'Something went wrong.' });
   }
 }
@@ -3162,11 +3173,12 @@ const app = express();
 app.use('/api', apiRouter);
 app.use(async (req, res, next) => {
   try {
-    await requestHandler(req, res);
+    await requestHandler(req, res, next);
   } catch (err) {
     next(err);
   }
 });
+app.use(errorHandler);
 const server = http.createServer(app);
 
 // ===== CODE ANALYSIS ENGINE =====
@@ -4244,7 +4256,9 @@ if (process.env.VERCEL !== '1' && process.env.NODE_ENV !== 'test') {
       const host = process.env.HOST || '127.0.0.1';
 
       server.listen(port, host, () => {
-        console.log(`\n\x1b[38;5;183mServer running at\x1b[0m \x1b[38;5;228mhttp://${host}:${port}\x1b[0m\n`);
+        console.log(
+          `\n\x1b[38;5;183mServer running at\x1b[0m \x1b[38;5;228mhttp://${host}:${port}\x1b[0m\n`
+        );
       });
 
       server.on('error', (err) => {
