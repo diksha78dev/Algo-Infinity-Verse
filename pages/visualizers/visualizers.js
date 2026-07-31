@@ -9,6 +9,13 @@ const visualizers = [
     category: 'Distributed Systems',
     icon: 'fa-network-wired',
     desc: 'Visualize how databases like Cassandra use Gossip Protocol and Merkle Trees to achieve eventual consistency and repair stale nodes via anti-entropy.',
+    },
+  {
+    name: 'Redis Cluster Hash Slot Migration Storm',
+    path: '/pages/visualizers/redis-cluster-migration-storm/redis-cluster-migration-storm.html',
+    category: 'Distributed Systems',
+    icon: 'fa-server',
+    desc: 'Visualize 16,384 hash slots distributed across 3 Master nodes. Trigger a failure, animate Slave promotion, and see the Migration Storm re-synchronize quorum.',
   },
   {
     name: 'MVCC Garbage Collection (Vacuum)',
@@ -44,6 +51,13 @@ const visualizers = [
     category: 'AI & ML',
     icon: 'fa-brain',
     desc: 'Visualize a recurrent neural network acting as a content-addressable memory system.',
+  },
+  {
+    name: 'Transformer QKV Attention Flow',
+    path: '/pages/visualizers/transformer-qkv-visualizer/transformer-qkv-visualizer.html',
+    category: 'AI & ML',
+    icon: 'fa-project-diagram',
+    desc: 'Interactive visualizer demonstrating the Query, Key, and Value (QKV) dot-product attention mechanism used in LLMs.',
   },
   {
     name: 'Distributed Tracing Simulator',
@@ -100,6 +114,20 @@ const visualizers = [
     category: 'Security & Crypto',
     icon: 'fa-lock',
     desc: 'Interactive visualizer for the TLS 1.3 cryptographic handshake protocol (1-RTT and 0-RTT).',
+  },
+  {
+    name: 'LMAX Disruptor Simulator',
+    path: '/pages/visualizers/lmax-disruptor-simulator/lmax-disruptor-simulator.html',
+    category: 'Distributed Systems',
+    icon: 'fa-microchip',
+    desc: 'Visualize a lock-free Ring Buffer with Producers and Consumers using memory barriers and sequence numbers.',
+  },
+  {
+    name: 'TLB Thrashing & Page Fault Simulator',
+    path: '/pages/visualizers/tlb-page-fault-simulator/tlb-page-fault-simulator.html',
+    category: 'OS & Architecture',
+    icon: 'fa-microchip',
+    desc: 'Simulate virtual memory mapping, TLB cache thrashing via stride access, and costly disk page faults.',
   },
   // ── Sorting & Searching ──
   {
@@ -774,6 +802,13 @@ const visualizers = [
 
   // ── Distributed Systems ──
   {
+    name: 'CRDT Sequence Interleaving Sandbox',
+    path: '/pages/visualizers/crdt-visualizer/crdt-visualizer.html',
+    category: 'Distributed Systems',
+    icon: 'fa-network-wired',
+    desc: 'Simulate offline edits on two disconnected clients, then visualize mathematical merging resolving edits concurrently without conflicts.',
+  },
+  {
     name: 'Chord vs Skip Graph DHT Routing',
     path: '/pages/visualizers/chord-vs-skip-graph/chord-vs-skip-graph.html',
     category: 'Distributed Systems',
@@ -807,6 +842,13 @@ const visualizers = [
     category: 'Distributed Systems',
     icon: 'fa-anchor',
     desc: 'Interactive Raft consensus algorithm: leader election and log replication.',
+  },
+  {
+    name: 'Raft Split-Brain Simulator',
+    path: '/pages/visualizers/raft-split-brain-simulator/raft-split-brain-simulator.html',
+    category: 'Distributed Systems',
+    icon: 'fa-network-wired',
+    desc: 'Visualize Raft network partitions and the split-brain infinite election timeout loop.',
   },
   {
     name: 'PBFT Simulator',
@@ -963,6 +1005,13 @@ const visualizers = [
     category: 'Security & Crypto',
     icon: 'fa-user-secret',
     desc: 'Zero-Knowledge Proof concepts visualized step by step.',
+  },
+  {
+    name: 'zk-SNARKs Sandbox',
+    path: '/pages/visualizers/zk-snarks-sandbox/zk-snarks-sandbox.html',
+    category: 'Security & Crypto',
+    icon: 'fa-microchip',
+    desc: 'A cryptography sandbox demonstrating the core mechanism of zk-SNARKs.',
   },
   {
     name: 'Shamir Secret Sharing',
@@ -1589,6 +1638,13 @@ const visualizers = [
     desc: 'Interactive BGP Route Propagation & Hijacking Simulator | Algo-Infinity-Verse visualization.',
   },
   {
+    name: 'BGP Route Dampening Sandbox | Algo-Infinity-Verse',
+    path: '/pages/visualizers/bgp-route-dampening-sandbox/bgp-route-dampening-sandbox.html',
+    category: 'Algorithms',
+    icon: 'fa-bolt',
+    desc: 'Interactive BGP Route Dampening Sandbox | Algo-Infinity-Verse visualization.',
+  },
+  {
     name: 'Centroid Decomposition Visualizer · Algo Infinity Verse',
     path: '/pages/visualizers/centroid/centroid.html',
     category: 'Algorithms',
@@ -2092,6 +2148,13 @@ const visualizers = [
     category: 'Distributed Systems',
     icon: 'fa-network-wired',
     desc: 'Simulate gossip protocol dissemination and phi-accrual failure detection across a cluster of nodes.',
+  },
+  {
+    name: 'Raft Consensus Split-Brain Simulator',
+    path: '/pages/visualizers/raft-partition-simulator/raft-partition-simulator.html',
+    category: 'Distributed Systems',
+    icon: 'fa-house-medical',
+    desc: 'Simulate Raft node elections, AppendEntries replication, network partitions, and log healing.',
   },
   {
     name: 'Join Optimizer Visualizer',
