@@ -4,6 +4,13 @@
 
 const visualizers = [
   {
+    name: 'Generational GC: CMS vs G1',
+    path: '/pages/visualizers/generational-gc-profiler/generational-gc-profiler.html',
+    category: 'System Design',
+    icon: 'fa-trash-alt',
+    desc: 'Visualize and profile Stop-The-World pause times between CMS and G1 garbage collection algorithms.',
+  },
+  {
     name: 'MVCC Garbage Collection (Vacuum)',
     path: '/pages/visualizers/mvcc-visualizer/mvcc-visualizer.html',
     category: 'Database Internals',
